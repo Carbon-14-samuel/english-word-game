@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>小学英语单词配对游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            max-width: 480px;
+            width: 100%;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 10px 15px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-row1 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .header-row2 {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .level-badge {
+            background: linear-gradient(135deg, #66BB6A, #43A047);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .grade-badge {
+            background: linear-gradient(135deg, #FFA726, #FF9800);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .grade-select {
+            background: linear-gradient(135deg, #26C6DA, #00ACC1);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(38, 198, 218, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .grade-select:hover {
+            transform: scale(1.05);
+        }
+
+        .grade-select:active {
+            transform: scale(0.95);
+        }
+
+        .grade-select option {
+            background: white;
+            color: #333;
+        }
+
+        .pairs-select {
+            background: linear-gradient(135deg, #78909C, #546E7A);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(120, 144, 156, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .pairs-select:hover {
+            transform: scale(1.05);
+        }
+
+        .pairs-select:active {
+            transform: scale(0.95);
+        }
+
+        .pairs-select option {
+            background: white;
+            color: #333;
+        }
+
+        .score-display {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .score-value {
+            color: #2196F3;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .lives-display {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 18px;
+        }
+
+        .heart {
+            color: #EF5350;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .heart.lost {
+            opacity: 0.3;
+            filter: grayscale(100%);
+            transform: scale(0.8);
+        }
+
+        .btn-downgrade,
+        .btn-upgrade,
+        .btn-hint,
+        .btn-collection {
+            background: linear-gradient(135deg, #42A5F5, #1E88E5);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(66, 165, 245, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .btn-downgrade { background: linear-gradient(135deg, #FF7043, #F4511E); box-shadow: 0 2px 6px rgba(255, 112, 67, 0.3); }
+        .btn-upgrade { background: linear-gradient(135deg, #66BB6A, #43A047); box-shadow: 0 2px 6px rgba(102, 187, 106, 0.3); }
+        .btn-collection { background: linear-gradient(135deg, #AB47BC, #8E24AA); box-shadow: 0 2px 6px rgba(171, 71, 188, 0.3); }
+        .btn-achievements { background: linear-gradient(135deg, #FFA726, #FF9800); box-shadow: 0 2px 6px rgba(255, 167, 38, 0.3); }
+
+        .btn-downgrade:hover,
+        .btn-upgrade:hover,
+        .btn-hint:hover,
+        .btn-collection:hover,
+        .btn-achievements:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-downgrade:active,
+        .btn-upgrade:active,
+        .btn-hint:active,
+        .btn-collection:active,
+        .btn-achievements:active {
+            transform: scale(0.95);
+        }
+
+        .btn-hint:disabled {
+            background: #BDBDBD;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .combo-display {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #FFA726, #FF6F00);
+            color: white;
+            padding: 15px 35px;
+            border-radius: 25px;
+            font-size: 28px;
+            font-weight: bold;
+            display: none;
+            z-index: 500;
+            animation: comboAnim 0.6s ease;
+        }
+
+        @keyframes comboAnim {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            30% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+            70% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
+        }
+
+        .progress-container {
+            width: 100%;
+            background: #e8e8e8;
+            border-radius: 12px;
+            height: 20px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #66BB6A, #81C784, #A5D6A7);
+            transition: width 0.3s ease;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: fit-content;
+            padding: 0 10px;
+        }
+
+        .game-board {
+            background: white;
+            border-radius: 15px;
+            padding: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+        .grid.cols-5 { grid-template-columns: repeat(5, 1fr); }
+
+        .cell {
+            aspect-ratio: 1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12), inset 0 -2px 6px rgba(0, 0, 0, 0.08);
+            padding: 8px;
+            min-height: 65px;
+            -webkit-user-select: none;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+            font-weight: bold;
+            font-size: clamp(12px, 4vw, 18px);
+            text-align: center;
+            line-height: 1.2;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .cell:active { transform: scale(0.92); }
+        .cell.selected { transform: scale(1.08); box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 35px currentColor; z-index: 10; animation: pulse 0.6s ease infinite; }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1.08); }
+            50% { transform: scale(1.12); }
+        }
+
+        .cell.matched { animation: matchPop 0.4s ease forwards; }
+
+        @keyframes matchPop {
+            0% { transform: scale(1.08); opacity: 1; }
+            50% { transform: scale(1.25); }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .cell.wrong { animation: shake 0.4s ease; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        .candy-1 { background: linear-gradient(145deg, #EF5350, #E53935); }
+        .candy-2 { background: linear-gradient(145deg, #AB47BC, #8E24AA); }
+        .candy-3 { background: linear-gradient(145deg, #42A5F5, #1E88E5); }
+        .candy-4 { background: linear-gradient(145deg, #26C6DA, #00ACC1); color: #333; text-shadow: none; }
+        .candy-5 { background: linear-gradient(145deg, #66BB6A, #43A047); color: #333; text-shadow: none; }
+        .candy-6 { background: linear-gradient(145deg, #FFCA28, #FFB300); color: #333; text-shadow: none; }
+        .candy-7 { background: linear-gradient(145deg, #FF7043, #E64A19); }
+        .candy-8 { background: linear-gradient(145deg, #5C6BC0, #3949AB); }
+        .candy-9 { background: linear-gradient(145deg, #EC407A, #D81B60); }
+        .candy-10 { background: linear-gradient(145deg, #78909C, #546E7A); color: #333; text-shadow: none; }
+        .candy-11 { background: linear-gradient(145deg, #FFB74D, #FF9800); color: #333; text-shadow: none; }
+        .candy-12 { background: linear-gradient(145deg, #81C784, #66BB6A); color: #333; text-shadow: none; }
+
+        .hint-bar {
+            background: white;
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-top: 12px;
+            text-align: center;
+            color: #666;
+            font-size: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .hint-bar span { color: #EF5350; font-weight: bold; }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            max-width: 90%;
+            max-height: 85%;
+            overflow-y: auto;
+            animation: modalPop 0.3s ease;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal h2 { font-size: 24px; margin-bottom: 15px; color: #333; }
+        .modal .close-btn {
+            background: linear-gradient(135deg, #66BB6A, #43A047);
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            box-shadow: 0 4px 12px rgba(102, 187, 106, 0.4);
+        }
+
+        /* 收藏本样式 */
+        .collection-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+        }
+
+        .collection-item:last-child { border-bottom: none; }
+
+        .collection-item .en { font-weight: bold; color: #2196F3; }
+        .collection-item .cn { color: #666; margin-left: 15px; }
+        .collection-item .status { color: #4CAF50; font-size: 12px; }
+
+        .collection-item.mistake .en { color: #EF5350; }
+        .collection-item.mistake .count { background: #EF5350; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px; }
+
+        .grade-section { margin-bottom: 20px; }
+        .grade-title { font-size: 16px; font-weight: bold; color: #66BB6A; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 2px solid #66BB6A; }
+        .grade-progress { font-size: 13px; color: #999; margin-bottom: 8px; }
+
+        /* 成就样式 */
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background: #f5f5f5;
+            transition: all 0.3s ease;
+        }
+
+        .achievement-item.unlocked {
+            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+            border: 2px solid #66BB6A;
+        }
+
+        .achievement-icon { font-size: 32px; margin-right: 15px; }
+        .achievement-info { flex: 1; text-align: left; }
+        .achievement-name { font-weight: bold; font-size: 15px; color: #333; }
+        .achievement-desc { font-size: 12px; color: #666; margin-top: 3px; }
+        .achievement-reward { font-size: 12px; color: #FFA726; font-weight: bold; }
+        .achievement-lock { color: #999; font-size: 24px; }
+
+        .achievement-popup {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #FFA726, #FF9800);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            display: none;
+            z-index: 1500;
+            animation: achievementPop 0.5s ease;
+            box-shadow: 0 10px 30px rgba(255, 167, 38, 0.5);
+        }
+
+        @keyframes achievementPop {
+            0% { transform: translateX(-50%) scale(0.5); opacity: 0; }
+            30% { transform: translateX(-50%) scale(1.1); opacity: 1; }
+            70% { transform: translateX(-50%) scale(1); opacity: 1; }
+            100% { transform: translateX(-50%) scale(1); opacity: 1; }
+        }
+
+        .level-up-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(102, 187, 106, 0.95);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 30px;
+            font-size: 24px;
+            font-weight: bold;
+            display: none;
+            z-index: 500;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: translate(-50%, -50%) scale(0.7); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        @media (max-width: 360px) {
+            .cell { min-height: 55px; }
+            .grid { gap: 6px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <div class="grade-badge" id="gradeDisplay">一年级</div>
+            <div class="header-row1">
+                <select class="grade-select" id="gradeSelect" onchange="changeGrade(this.value)">
+                    <option value="0">一年级</option>
+                    <option value="1">二年级</option>
+                    <option value="2">三年级</option>
+                    <option value="3">四年级</option>
+                    <option value="4">五年级</option>
+                    <option value="5">六年级</option>
+                </select>
+                <select class="pairs-select" id="pairsSelect" onchange="changePairs(this.value)">
+                    <option value="4">4对</option>
+                    <option value="6">6对</option>
+                    <option value="8">8对</option>
+                    <option value="10">10对</option>
+                    <option value="12">12对</option>
+                </select>
+                <div class="level-badge">LV <span id="level">1</span></div>
+                <div class="lives-display" id="livesDisplay">
+                    <span class="heart">❤</span>
+                    <span class="heart">❤</span>
+                    <span class="heart">❤</span>
+                </div>
+                <div class="score-display">分数: <span class="score-value" id="score">0</span></div>
+                <div class="grade-badge" id="gradeBadge">一年级</div>
+            </div>
+            <div class="header-row2">
+                <button class="btn-collection" onclick="showCollection()">📖 收藏本</button>
+                <button class="btn-achievements" onclick="showAchievements()">🏆 成就</button>
+                <button class="btn-hint" id="hintBtn" onclick="useHint()">💡 提示</button>
+                <button class="btn-upgrade" onclick="upgradeLevel()">↑ 升级</button>
+                <button class="btn-downgrade" onclick="downgradeLevel()">↓ 降级</button>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="progress">0 / 100</div>
+        </div>
+
+        <div class="game-board">
+            <div class="grid cols-4" id="grid"></div>
+        </div>
+
+        <div class="hint-bar">
+            点击配对 <span>中文</span> 和 <span>英文</span>
+        </div>
+    </div>
+
+    <div class="combo-display" id="comboDisplay">连击 x3！</div>
+    <div class="achievement-popup" id="achievementPopup">🎉 解锁成就：初学者</div>
+    <div class="level-up-text" id="levelUpText">升级！</div>
+
+    <!-- 收藏本弹窗 -->
+    <div class="modal-overlay" id="collectionModal">
+        <div class="modal">
+            <h2>📖 单词收藏本</h2>
+            <div id="collectionContent"></div>
+            <button class="close-btn" onclick="closeModal('collectionModal')">关闭</button>
+        </div>
+    </div>
+
+    <!-- 成就弹窗 -->
+    <div class="modal-overlay" id="achievementModal">
+        <div class="modal">
+            <h2>🏆 成就系统</h2>
+            <div id="achievementContent"></div>
+            <button class="close-btn" onclick="closeModal('achievementModal')">关闭</button>
+        </div>
+    </div>
+
+    <script>
+        // 小学英语词库（基于PEP人教版）
+        const wordLibrary = {
+            grade1: [
+                {en: 'apple', cn: '苹果', id: 1},
+                {en: 'banana', cn: '香蕉', id: 2},
+                {en: 'cat', cn: '猫', id: 3},
+                {en: 'dog', cn: '狗', id: 4},
+                {en: 'book', cn: '书', id: 5},
+                {en: 'pen', cn: '笔', id: 6},
+                {en: 'red', cn: '红色', id: 7},
+                {en: 'blue', cn: '蓝色', id: 8},
+                {en: 'one', cn: '一', id: 9},
+                {en: 'two', cn: '二', id: 10},
+                {en: 'three', cn: '三', id: 11},
+                {en: 'four', cn: '四', id: 12},
+                {en: 'five', cn: '五', id: 13},
+                {en: 'six', cn: '六', id: 14},
+                {en: 'good', cn: '好的', id: 15},
+                {en: 'hello', cn: '你好', id: 16},
+                {en: 'morning', cn: '早晨', id: 17},
+                {en: 'face', cn: '脸', id: 18},
+                {en: 'nose', cn: '鼻子', id: 19},
+                {en: 'eye', cn: '眼睛', id: 20},
+                {en: 'ear', cn: '耳朵', id: 21},
+                {en: 'mouth', cn: '嘴巴', id: 22},
+                {en: 'hand', cn: '手', id: 23},
+                {en: 'foot', cn: '脚', id: 24},
+            ],
+            grade2: [
+                {en: 'orange', cn: '橙子', id: 1},
+                {en: 'pear', cn: '梨', id: 2},
+                {en: 'grape', cn: '葡萄', id: 3},
+                {en: 'watermelon', cn: '西瓜', id: 4},
+                {en: 'bird', cn: '鸟', id: 5},
+                {en: 'rabbit', cn: '兔子', id: 6},
+                {en: 'pig', cn: '猪', id: 7},
+                {en: 'duck', cn: '鸭子', id: 8},
+                {en: 'seven', cn: '七', id: 9},
+                {en: 'eight', cn: '八', id: 10},
+                {en: 'nine', cn: '九', id: 11},
+                {en: 'ten', cn: '十', id: 12},
+                {en: 'eleven', cn: '十一', id: 13},
+                {en: 'twelve', cn: '十二', id: 14},
+                {en: 'green', cn: '绿色', id: 15},
+                {en: 'yellow', cn: '黄色', id: 16},
+                {en: 'brown', cn: '棕色', id: 17},
+                {en: 'black', cn: '黑色', id: 18},
+                {en: 'white', cn: '白色', id: 19},
+                {en: 'school', cn: '学校', id: 20},
+                {en: 'teacher', cn: '老师', id: 21},
+                {en: 'student', cn: '学生', id: 22},
+                {en: 'family', cn: '家庭', id: 23},
+                {en: 'father', cn: '爸爸', id: 24},
+            ],
+            grade3: [
+                {en: 'desk', cn: '书桌', id: 1},
+                {en: 'chair', cn: '椅子', id: 2},
+                {en: 'bag', cn: '书包', id: 3},
+                {en: 'pencil', cn: '铅笔', id: 4},
+                {en: 'ruler', cn: '尺子', id: 5},
+                {en: 'eraser', cn: '橡皮', id: 6},
+                {en: 'box', cn: '盒子', id: 7},
+                {en: 'cup', cn: '杯子', id: 8},
+                {en: 'thirteen', cn: '十三', id: 9},
+                {en: 'fourteen', cn: '十四', id: 10},
+                {en: 'fifteen', cn: '十五', id: 11},
+                {en: 'sixteen', cn: '十六', id: 12},
+                {en: 'seventeen', cn: '十七', id: 13},
+                {en: 'eighteen', cn: '十八', id: 14},
+                {en: 'brother', cn: '兄弟', id: 15},
+                {en: 'sister', cn: '姐妹', id: 16},
+                {en: 'mother', cn: '妈妈', id: 17},
+                {en: 'father', cn: '爸爸', id: 18},
+                {en: 'friend', cn: '朋友', id: 19},
+                {en: 'happy', cn: '快乐', id: 20},
+                {en: 'sad', cn: '悲伤', id: 21},
+                {en: 'angry', cn: '生气', id: 22},
+                {en: 'tired', cn: '累', id: 23},
+                {en: 'hungry', cn: '饿', id: 24},
+            ],
+            grade4: [
+                {en: 'bedroom', cn: '卧室', id: 1},
+                {en: 'kitchen', cn: '厨房', id: 2},
+                {en: 'bathroom', cn: '浴室', id: 3},
+                {en: 'living', cn: '客厅', id: 4},
+                {en: 'sofa', cn: '沙发', id: 5},
+                {en: 'table', cn: '桌子', id: 6},
+                {en: 'fridge', cn: '冰箱', id: 7},
+                {en: 'window', cn: '窗户', id: 8},
+                {en: 'nineteen', cn: '十九', id: 9},
+                {en: 'twenty', cn: '二十', id: 10},
+                {en: 'thirty', cn: '三十', id: 11},
+                {en: 'forty', cn: '四十', id: 12},
+                {en: 'fifty', cn: '五十', id: 13},
+                {en: 'weather', cn: '天气', id: 14},
+                {en: 'sunny', cn: '晴朗', id: 15},
+                {en: 'rainy', cn: '下雨', id: 16},
+                {en: 'snowy', cn: '下雪', id: 17},
+                {en: 'windy', cn: '刮风', id: 18},
+                {en: 'cloudy', cn: '多云', id: 19},
+                {en: 'spring', cn: '春天', id: 20},
+                {en: 'summer', cn: '夏天', id: 21},
+                {en: 'autumn', cn: '秋天', id: 22},
+                {en: 'winter', cn: '冬天', id: 23},
+                {en: 'season', cn: '季节', id: 24},
+            ],
+            grade5: [
+                {en: 'breakfast', cn: '早餐', id: 1},
+                {en: 'lunch', cn: '午餐', id: 2},
+                {en: 'dinner', cn: '晚餐', id: 3},
+                {en: 'noodles', cn: '面条', id: 4},
+                {en: 'rice', cn: '米饭', id: 5},
+                {en: 'bread', cn: '面包', id: 6},
+                {en: 'egg', cn: '鸡蛋', id: 7},
+                {en: 'milk', cn: '牛奶', id: 8},
+                {en: 'sixty', cn: '六十', id: 9},
+                {en: 'seventy', cn: '七十', id: 10},
+                {en: 'eighty', cn: '八十', id: 11},
+                {en: 'ninety', cn: '九十', id: 12},
+                {en: 'hundred', cn: '百', id: 13},
+                {en: 'shopping', cn: '购物', id: 14},
+                {en: 'clothes', cn: '衣服', id: 15},
+                {en: 'shoes', cn: '鞋子', id: 16},
+                {en: 'shirt', cn: '衬衫', id: 17},
+                {en: 'dress', cn: '连衣裙', id: 18},
+                {en: 'skirt', cn: '裙子', id: 19},
+                {en: 'jacket', cn: '夹克', id: 20},
+                {en: 'coat', cn: '外套', id: 21},
+                {en: 'pants', cn: '裤子', id: 22},
+                {en: 'price', cn: '价格', id: 23},
+                {en: 'cheap', cn: '便宜', id: 24},
+            ],
+            grade6: [
+                {en: 'library', cn: '图书馆', id: 1},
+                {en: 'hospital', cn: '医院', id: 2},
+                {en: 'cinema', cn: '电影院', id: 3},
+                {en: 'museum', cn: '博物馆', id: 4},
+                {en: 'restaurant', cn: '餐厅', id: 5},
+                {en: 'supermarket', cn: '超市', id: 6},
+                {en: 'park', cn: '公园', id: 7},
+                {en: 'zoo', cn: '动物园', id: 8},
+                {en: 'yesterday', cn: '昨天', id: 9},
+                {en: 'today', cn: '今天', id: 10},
+                {en: 'tomorrow', cn: '明天', id: 11},
+                {en: 'weekend', cn: '周末', id: 12},
+                {en: 'vacation', cn: '假期', id: 13},
+                {en: 'holiday', cn: '节日', id: 14},
+                {en: 'interesting', cn: '有趣的', id: 15},
+                {en: 'exciting', cn: '令人兴奋的', id: 16},
+                {en: 'dangerous', cn: '危险的', id: 17},
+                {en: 'beautiful', cn: '美丽的', id: 18},
+                {en: 'important', cn: '重要的', id: 19},
+                {en: 'difficult', cn: '困难的', id: 20},
+                {en: 'easy', cn: '容易的', id: 21},
+                {en: 'careful', cn: '小心的', id: 22},
+                {en: 'quickly', cn: '快速地', id: 23},
+                {en: 'slowly', cn: '慢慢地', id: 24},
+            ]
+        };
+
+        const gradeNames = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'];
+
+        // 成就定义
+        const achievements = [
+            { id: 'beginner', name: '🌱 初学者', desc: '完成 5 局', reward: 50, check: () => stats.gamesPlayed >= 5 },
+            { id: 'combo_king', name: '🔥 连击王', desc: '单次连击 5 对', reward: 100, check: () => stats.maxCombo >= 5 },
+            { id: 'word_master_g1', name: '📚 一年级单词达人', desc: '学完一年级所有单词', reward: 200, check: () => getLearnedCount(0) >= wordLibrary.grade1.length },
+            { id: 'perfect_match', name: '🎯 精准配对', desc: '0 错误完成一局', reward: 150, check: () => stats.perfectMatches > 0 },
+            { id: 'scholar_g3', name: '🏆 学霸', desc: '升到三年级', reward: 300, check: () => level >= 21 },
+            { id: 'word_master_all', name: '⭐ 单词大师', desc: '学完所有年级所有单词', reward: 1000, check: () => checkAllWordsLearned() },
+            { id: 'speed_runner', name: '🚀 速战速决', desc: '30秒内完成一局', reward: 200, check: () => stats.fastestTime !== null && stats.fastestTime <= 30 },
+        ];
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+        }
+
+        function playSound(type) {
+            initAudio();
+
+            if (type === 'select') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.frequency.setValueAtTime(523, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'match') {
+                [523, 659, 784, 1047].forEach((freq, i) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.frequency.value = freq;
+                    g.gain.setValueAtTime(0.15, audioCtx.currentTime + i * 0.08);
+                    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.08 + 0.15);
+                    o.start(audioCtx.currentTime + i * 0.08);
+                    o.stop(audioCtx.currentTime + i * 0.08 + 0.15);
+                });
+            } else if (type === 'wrong') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'levelup') {
+                [523, 659, 784, 1047, 1319].forEach((freq, i) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.frequency.value = freq;
+                    g.gain.setValueAtTime(0.15, audioCtx.currentTime + i * 0.1);
+                    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.15);
+                    o.start(audioCtx.currentTime + i * 0.1);
+                    o.stop(audioCtx.currentTime + i * 0.1 + 0.15);
+                });
+            } else if (type === 'clear') {
+                [523, 659, 784, 1047, 1319, 1568].forEach((freq, i) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.frequency.value = freq;
+                    g.gain.setValueAtTime(0.2, audioCtx.currentTime + i * 0.07);
+                    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.07 + 0.2);
+                    o.start(audioCtx.currentTime + i * 0.07);
+                    o.stop(audioCtx.currentTime + i * 0.07 + 0.2);
+                });
+            } else if (type === 'achievement') {
+                [659, 784, 1047, 1319, 1568, 2093].forEach((freq, i) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.frequency.value = freq;
+                    g.gain.setValueAtTime(0.2, audioCtx.currentTime + i * 0.1);
+                    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.2);
+                    o.start(audioCtx.currentTime + i * 0.1);
+                    o.stop(audioCtx.currentTime + i * 0.1 + 0.2);
+                });
+            }
+        }
+
+        // 游戏状态
+        let grid = [];
+        let selectedCell = null;
+        let score = 0;
+        let level = 1;
+        let exp = 0;
+        let expToNextLevel = 100;
+        let isProcessing = false;
+        let matchedCount = 0;
+        let currentGrade = 0;
+        let currentPairs = 4;
+        let currentCols = 4;
+
+        let lives = 3;
+        let maxLives = 3;
+        let combo = 0;
+        let hintsRemaining = 2;
+        let maxHints = 2;
+
+        let currentRoundErrors = 0;
+        let roundStartTime = null;
+
+        // 统计数据（用于成就）
+        let stats = {
+            gamesPlayed: 0,
+            maxCombo: 0,
+            perfectMatches: 0,
+            fastestTime: null,
+            totalWordsLearned: 0
+        };
+
+        // 已学单词和错词记录
+        let learnedWords = {}; // {grade: [wordIds]}
+        let mistakeWords = {}; // {grade: [{en, cn, count}]}
+        let unlockedAchievements = [];
+
+        // 初始化数据
+        function initData() {
+            // 加载保存的数据
+            const savedData = localStorage.getItem('wordGameData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                score = data.score || 0;
+                level = data.level || 1;
+                exp = data.exp || 0;
+                expToNextLevel = data.expToNextLevel || 100;
+                stats = data.stats || stats;
+                learnedWords = data.learnedWords || {};
+                mistakeWords = data.mistakeWords || {};
+                unlockedAchievements = data.unlockedAchievements || [];
+            }
+
+            // 初始化年级数据
+            for (let i = 0; i < 6; i++) {
+                if (!learnedWords[i]) learnedWords[i] = [];
+                if (!mistakeWords[i]) mistakeWords[i] = [];
+            }
+        }
+
+        // 保存数据
+        function saveData() {
+            const data = {
+                score, level, exp, expToNextLevel,
+                stats, learnedWords, mistakeWords, unlockedAchievements
+            };
+            localStorage.setItem('wordGameData', JSON.stringify(data));
+        }
+
+        function getGradeForLevel(lvl) {
+            return Math.min(Math.floor((lvl - 1) / 10), 5);
+        }
+
+        function getDifficultyForLevel(lvl) {
+            if (lvl <= 2) return { pairs: 4, cols: 4 };
+            if (lvl <= 5) return { pairs: 6, cols: 4 };
+            if (lvl <= 10) return { pairs: 8, cols: 4 };
+            if (lvl <= 15) return { pairs: 10, cols: 5 };
+            return { pairs: 12, cols: 5 };
+        }
+
+        function initGame() {
+            currentGrade = getGradeForLevel(level);
+            const difficulty = getDifficultyForLevel(level);
+            currentPairs = difficulty.pairs;
+            currentCols = difficulty.cols;
+
+            lives = maxLives;
+            combo = 0;
+            hintsRemaining = maxHints;
+            currentRoundErrors = 0;
+            roundStartTime = Date.now();
+
+            matchedCount = 0;
+            createGrid();
+            updateUI();
+        }
+
+        function createGrid() {
+            const gridElement = document.getElementById('grid');
+            gridElement.innerHTML = '';
+            grid = [];
+
+            gridElement.className = `grid cols-${currentCols}`;
+
+            const gradeWords = wordLibrary[`grade${currentGrade + 1}`];
+            const shuffledPairs = [...gradeWords].sort(() => Math.random() - 0.5).slice(0, currentPairs);
+
+            let cells = [];
+            shuffledPairs.forEach((pair, idx) => {
+                const cnColor = Math.floor(Math.random() * 12) + 1;
+                let enColor = Math.floor(Math.random() * 12) + 1;
+                while (enColor === cnColor) {
+                    enColor = Math.floor(Math.random() * 12) + 1;
+                }
+
+                cells.push({
+                    text: pair.cn,
+                    type: 'cn',
+                    pairId: pair.id,
+                    color: cnColor,
+                    wordId: pair.id,
+                    wordEn: pair.en,
+                    wordCn: pair.cn
+                });
+                cells.push({
+                    text: pair.en,
+                    type: 'en',
+                    pairId: pair.id,
+                    color: enColor,
+                    wordId: pair.id,
+                    wordEn: pair.en,
+                    wordCn: pair.cn
+                });
+            });
+
+            cells = cells.sort(() => Math.random() - 0.5);
+
+            cells.forEach((cellData, index) => {
+                grid.push(cellData);
+                const cell = createCell(index, cellData);
+                gridElement.appendChild(cell);
+            });
+
+            matchedCount = 0;
+        }
+
+        function createCell(index, cellData) {
+            const cell = document.createElement('div');
+            cell.className = `cell candy-${cellData.color}`;
+            cell.dataset.index = index;
+            cell.textContent = cellData.text;
+            cell.addEventListener('click', () => handleCellClick(index));
+            return cell;
+        }
+
+        function handleCellClick(index) {
+            if (isProcessing) return;
+            initAudio();
+
+            const cellElement = document.querySelector(`.cell[data-index="${index}"]`);
+
+            if (selectedCell === index) {
+                cellElement.classList.remove('selected');
+                selectedCell = null;
+                return;
+            }
+
+            playSound('select');
+
+            if (selectedCell === null) {
+                selectedCell = index;
+                cellElement.classList.add('selected');
+            } else {
+                const first = grid[selectedCell];
+                const second = grid[index];
+
+                if (first.pairId === second.pairId && first.type !== second.type) {
+                    matchSuccess(selectedCell, index);
+                } else {
+                    matchFail(selectedCell, index);
+                }
+            }
+        }
+
+        function matchSuccess(idx1, idx2) {
+            isProcessing = true;
+            playSound('match');
+
+            const cell1 = document.querySelector(`.cell[data-index="${idx1}"]`);
+            const cell2 = document.querySelector(`.cell[data-index="${idx2}"]`);
+
+            cell1.classList.add('matched');
+            cell2.classList.add('matched');
+
+            grid[idx1].matched = true;
+            grid[idx2].matched = true;
+
+            matchedCount += 2;
+
+            // 记录学过的单词
+            const wordId = grid[idx1].wordId;
+            if (!learnedWords[currentGrade].includes(wordId)) {
+                learnedWords[currentGrade].push(wordId);
+            }
+
+            // 连击系统
+            combo++;
+            if (combo > stats.maxCombo) {
+                stats.maxCombo = combo;
+            }
+            let comboMultiplier = 1;
+            if (combo >= 3) comboMultiplier = 1.2;
+            if (combo >= 5) comboMultiplier = 1.5;
+            if (combo >= 7) comboMultiplier = 2;
+
+            const basePoints = currentPairs * 5;
+            const points = Math.floor(basePoints * comboMultiplier);
+            score += points;
+            exp += points;
+
+            if (combo >= 3) {
+                showCombo(combo);
+            }
+
+            updateUI();
+            checkAchievements();
+            saveData();
+
+            if (exp >= expToNextLevel) {
+                setTimeout(() => {
+                    playSound('levelup');
+                    levelUp();
+                }, 400);
+            }
+
+            setTimeout(() => {
+                cell1.style.visibility = 'hidden';
+                cell2.style.visibility = 'hidden';
+
+                selectedCell = null;
+                isProcessing = false;
+
+                if (matchedCount >= currentPairs * 2) {
+                    const roundTime = (Date.now() - roundStartTime) / 1000;
+                    stats.gamesPlayed++;
+
+                    // 完美配对奖励
+                    if (currentRoundErrors === 0) {
+                        stats.perfectMatches++;
+                    }
+
+                    // 最快时间
+                    if (stats.fastestTime === null || roundTime < stats.fastestTime) {
+                        stats.fastestTime = roundTime;
+                    }
+
+                    saveData();
+                    checkAchievements();
+
+                    setTimeout(() => {
+                        playSound('clear');
+                        setTimeout(() => {
+                            initGame();
+                        }, 500);
+                    }, 200);
+                }
+            }, 400);
+        }
+
+        function matchFail(idx1, idx2) {
+            playSound('wrong');
+
+            const cell1 = document.querySelector(`.cell[data-index="${idx1}"]`);
+            const cell2 = document.querySelector(`.cell[data-index="${idx2}"]`);
+
+            cell1.classList.add('wrong');
+            cell2.classList.add('wrong');
+
+            currentRoundErrors++;
+            lives--;
+            combo = 0;
+            updateUI();
+
+            // 记录错词
+            const wordEn = grid[idx1].wordEn;
+            const wordCn = grid[idx1].wordCn;
+            const existingMistake = mistakeWords[currentGrade].find(m => m.en === wordEn);
+            if (existingMistake) {
+                existingMistake.count++;
+            } else {
+                mistakeWords[currentGrade].push({ en: wordEn, cn: wordCn, count: 1 });
+            }
+            saveData();
+
+            if (lives <= 0) {
+                setTimeout(() => {
+                    gameOver();
+                }, 500);
+            }
+
+            setTimeout(() => {
+                cell1.classList.remove('selected', 'wrong');
+                cell2.classList.remove('wrong');
+                selectedCell = null;
+            }, 400);
+        }
+
+        function showCombo(count) {
+            const comboDisplay = document.getElementById('comboDisplay');
+            comboDisplay.textContent = `连击 x${count}！`;
+            comboDisplay.style.display = 'block';
+
+            setTimeout(() => {
+                comboDisplay.style.display = 'none';
+            }, 600);
+        }
+
+        function useHint() {
+            if (hintsRemaining <= 0 || isProcessing) return;
+
+            const availableCells = grid.filter(cell => !cell.matched);
+            if (availableCells.length < 2) return;
+
+            const pairId = availableCells[0].pairId;
+            const pairCells = grid.map((cell, index) => ({ cell, index }))
+                .filter(item => item.cell.pairId === pairId && !item.cell.matched);
+
+            if (pairCells.length === 2) {
+                pairCells.forEach(item => {
+                    const cellElement = document.querySelector(`.cell[data-index="${item.index}"]`);
+                    cellElement.style.boxShadow = '0 0 30px #FFD700, 0 0 60px #FFD700';
+                    cellElement.style.transform = 'scale(1.15)';
+
+                    setTimeout(() => {
+                        cellElement.style.boxShadow = '';
+                        cellElement.style.transform = '';
+                    }, 1500);
+                });
+
+                hintsRemaining--;
+                updateUI();
+                playSound('select');
+                saveData();
+            }
+        }
+
+        function gameOver() {
+            alert(`游戏结束！\n最终分数: ${score}\n等级: ${level}\n\n重新开始本局`);
+            lives = maxLives;
+            combo = 0;
+            hintsRemaining = maxHints;
+            currentRoundErrors = 0;
+            initGame();
+        }
+
+        function levelUp() {
+            level++;
+            const newGrade = getGradeForLevel(level);
+
+            if (newGrade > currentGrade) {
+                currentGrade = newGrade;
+            }
+
+            exp = exp - expToNextLevel;
+            expToNextLevel = Math.floor(expToNextLevel * 1.3);
+
+            const levelUpText = document.getElementById('levelUpText');
+            levelUpText.textContent = newGrade > currentGrade ? `升入${gradeNames[newGrade]}！` : '升级！';
+            levelUpText.style.display = 'block';
+
+            setTimeout(() => {
+                levelUpText.style.display = 'none';
+            }, 1500);
+
+            saveData();
+            checkAchievements();
+        }
+
+        function downgradeLevel() {
+            if (level > 1) {
+                level--;
+                const newGrade = getGradeForLevel(level);
+
+                // 如果降级导致年级改变，重置相关数据
+                if (newGrade < currentGrade) {
+                    currentGrade = newGrade;
+                }
+
+                // 重置当前关卡的游戏状态
+                lives = maxLives;
+                combo = 0;
+                hintsRemaining = maxHints;
+                currentRoundErrors = 0;
+                matchedCount = 0;
+
+                initGame();
+
+                // 显示降级提示
+                const levelUpText = document.getElementById('levelUpText');
+                levelUpText.textContent = '已降级';
+                levelUpText.style.display = 'block';
+
+                setTimeout(() => {
+                    levelUpText.style.display = 'none';
+                }, 1500);
+
+                saveData();
+            } else {
+                alert('已经是第1关了，不能再降级了！');
+            }
+        }
+
+        function upgradeLevel() {
+            // 检查是否已达到最高等级（60级，六年级）
+            if (level >= 60) {
+                alert('已经满级了，不能再升级了！');
+                return;
+            }
+
+            level++;
+            const newGrade = getGradeForLevel(level);
+
+            // 如果升级导致年级改变，更新当前年级
+            if (newGrade > currentGrade) {
+                currentGrade = newGrade;
+            }
+
+            // 重置当前关卡的游戏状态
+            lives = maxLives;
+            combo = 0;
+            hintsRemaining = maxHints;
+            currentRoundErrors = 0;
+            matchedCount = 0;
+
+            initGame();
+
+            // 显示升级提示
+            const levelUpText = document.getElementById('levelUpText');
+            levelUpText.textContent = newGrade > currentGrade - 1 ? `升入${gradeNames[newGrade]}！` : '已升级';
+            levelUpText.style.display = 'block';
+
+            setTimeout(() => {
+                levelUpText.style.display = 'none';
+            }, 1500);
+
+            saveData();
+        }
+
+        function changeGrade(gradeIndex) {
+            const newGrade = parseInt(gradeIndex);
+            
+            // 确认切换
+            if (confirm(`确定要切换到${gradeNames[newGrade]}吗？\n切换年级将重新开始当前局。`)) {
+                currentGrade = newGrade;
+                
+                // 根据年级设置初始等级（每个年级10关）
+                level = newGrade * 10 + 1;
+                exp = 0;
+                expToNextLevel = 100;
+                
+                // 重置当前关卡的游戏状态
+                lives = maxLives;
+                combo = 0;
+                hintsRemaining = maxHints;
+                currentRoundErrors = 0;
+                matchedCount = 0;
+
+                initGame();
+
+                // 更新下拉框显示
+                document.getElementById('gradeSelect').value = newGrade;
+
+                // 显示切换提示
+                const levelUpText = document.getElementById('levelUpText');
+                levelUpText.textContent = `已切换到${gradeNames[newGrade]}`;
+                levelUpText.style.display = 'block';
+
+                setTimeout(() => {
+                    levelUpText.style.display = 'none';
+                }, 1500);
+
+                saveData();
+            } else {
+                // 如果取消，恢复原来的选择
+                document.getElementById('gradeSelect').value = currentGrade;
+            }
+        }
+
+        function changePairs(pairs) {
+            const newPairs = parseInt(pairs);
+            
+            if (confirm(`确定要切换到 ${newPairs}对 单词吗？\n切换将重新开始当前局。`)) {
+                currentPairs = newPairs;
+                currentCols = newPairs <= 8 ? 4 : 5;
+                
+                lives = maxLives;
+                combo = 0;
+                hintsRemaining = maxHints;
+                currentRoundErrors = 0;
+                matchedCount = 0;
+
+                initGame();
+                document.getElementById('pairsSelect').value = newPairs;
+
+                const levelUpText = document.getElementById('levelUpText');
+                levelUpText.textContent = `已切换到${newPairs}对`;
+                levelUpText.style.display = 'block';
+
+                setTimeout(() => {
+                    levelUpText.style.display = 'none';
+                }, 1500);
+
+                saveData();
+            } else {
+                document.getElementById('pairsSelect').value = currentPairs;
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('level').textContent = level;
+            document.getElementById('gradeDisplay').textContent = gradeNames[currentGrade];
+            document.getElementById('gradeBadge').textContent = gradeNames[currentGrade];
+            document.getElementById('gradeSelect').value = currentGrade;
+            document.getElementById('pairsSelect').value = currentPairs;
+
+            const percent = Math.min((exp / expToNextLevel) * 100, 100);
+            document.getElementById('progress').style.width = percent + '%';
+            document.getElementById('progress').textContent = `${exp} / ${expToNextLevel}`;
+
+            const livesDisplay = document.getElementById('livesDisplay');
+            const hearts = livesDisplay.querySelectorAll('.heart');
+            hearts.forEach((heart, index) => {
+                if (index < lives) {
+                    heart.classList.remove('lost');
+                } else {
+                    heart.classList.add('lost');
+                }
+            });
+
+            const hintBtn = document.getElementById('hintBtn');
+            if (hintsRemaining > 0) {
+                hintBtn.textContent = `💡 提示 (${hintsRemaining})`;
+                hintBtn.disabled = false;
+            } else {
+                hintBtn.textContent = '💡 提示 (0)';
+                hintBtn.disabled = true;
+            }
+        }
+
+        // 收藏本功能
+        function showCollection() {
+            const content = document.getElementById('collectionContent');
+            let html = '';
+
+            for (let i = 0; i < 6; i++) {
+                const gradeWords = wordLibrary[`grade${i + 1}`];
+                const learned = learnedWords[i] || [];
+                const mistakes = mistakeWords[i] || [];
+
+                html += `<div class="grade-section">`;
+                html += `<div class="grade-title">${gradeNames[i]}</div>`;
+                html += `<div class="grade-progress">已学 ${learned.length} / ${gradeWords.length} 个单词</div>`;
+
+                // 显示已学单词
+                if (learned.length > 0) {
+                    html += `<div style="margin-bottom: 10px;">`;
+                    learned.forEach(id => {
+                        const word = gradeWords.find(w => w.id === id);
+                        if (word) {
+                            html += `
+                                <div class="collection-item">
+                                    <span class="en">${word.en}</span>
+                                    <span class="cn">${word.cn}</span>
+                                    <span class="status">✓ 已掌握</span>
+                                </div>`;
+                        }
+                    });
+                    html += `</div>`;
+                }
+
+                // 显示错词本
+                if (mistakes.length > 0) {
+                    html += `<div style="margin-top: 10px;"><strong>错词本：</strong></div>`;
+                    mistakes.forEach(m => {
+                        html += `
+                            <div class="collection-item mistake">
+                                <span class="en">${m.en}</span>
+                                <span class="count">错误 ${m.count} 次</span>
+                                <span class="cn">${m.cn}</span>
+                            </div>`;
+                    });
+                }
+
+                html += `</div>`;
+            }
+
+            if (html === '') {
+                html = '<p style="text-align: center; color: #999; padding: 20px;">还没有学过单词哦</p>';
+            }
+
+            content.innerHTML = html;
+            document.getElementById('collectionModal').classList.add('show');
+        }
+
+        // 成就系统
+        function showAchievements() {
+            const content = document.getElementById('achievementContent');
+            let html = '';
+
+            achievements.forEach(ach => {
+                const isUnlocked = unlockedAchievements.includes(ach.id);
+                html += `
+                    <div class="achievement-item ${isUnlocked ? 'unlocked' : ''}">
+                        <div class="achievement-icon">${isUnlocked ? ach.name.split(' ')[0] : '🔒'}</div>
+                        <div class="achievement-info">
+                            <div class="achievement-name">${ach.name}</div>
+                            <div class="achievement-desc">${isUnlocked ? '已解锁！' : ach.desc}</div>
+                            ${isUnlocked ? `<div class="achievement-reward">+${ach.reward} 分</div>` : ''}
+                        </div>
+                        ${isUnlocked ? '<div class="achievement-lock">✓</div>' : '<div class="achievement-lock">🔒</div>'}
+                    </div>`;
+            });
+
+            content.innerHTML = html;
+            document.getElementById('achievementModal').classList.add('show');
+        }
+
+        function checkAchievements() {
+            achievements.forEach(ach => {
+                if (!unlockedAchievements.includes(ach.id) && ach.check()) {
+                    unlockAchievement(ach);
+                }
+            });
+        }
+
+        function unlockAchievement(ach) {
+            unlockedAchievements.push(ach.id);
+            score += ach.reward;
+
+            const popup = document.getElementById('achievementPopup');
+            popup.textContent = `🎉 解锁成就：${ach.name}`;
+            popup.style.display = 'block';
+
+            playSound('achievement');
+
+            setTimeout(() => {
+                popup.style.display = 'none';
+            }, 2000);
+
+            saveData();
+        }
+
+        function getLearnedCount(grade) {
+            return learnedWords[grade] ? learnedWords[grade].length : 0;
+        }
+
+        function checkAllWordsLearned() {
+            for (let i = 0; i < 6; i++) {
+                const total = wordLibrary[`grade${i + 1}`].length;
+                const learned = getLearnedCount(i);
+                if (learned < total) return false;
+            }
+            return true;
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        // 关闭弹窗（点击遮罩）
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('show');
+                }
+            });
+        });
+
+        // 初始化
+        initData();
+        initGame();
+    </script>
+</body>
+</html>
