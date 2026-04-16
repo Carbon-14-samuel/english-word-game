@@ -1356,16 +1356,17 @@
         }
         
         // 预加载当前年级的音频
-        async function preloadGradeAudio(grade) {
-            const gradeWords = vocabulary[grade];
+        async function preloadGradeAudio(gradeIndex) {
+            const gradeNum = gradeIndex + 1; // gradeIndex从0开始，目录从1开始
+            const gradeWords = vocabulary[gradeIndex];
             if (!gradeWords) return;
             
-            console.log(`[Audio] Preloading grade ${grade} audio...`);
+            console.log(`[Audio] Preloading grade ${gradeNum} audio...`);
             
             for (const item of gradeWords) {
                 const word = item.en;
                 const filename = getAudioFilename(word);
-                const audioPath = `audio/grade${grade}/${filename}`;
+                const audioPath = `audio/grade${gradeNum}/${filename}`;
                 
                 if (!audioCache[word]) {
                     const audio = new Audio(audioPath);
@@ -1374,7 +1375,7 @@
                 }
             }
             
-            console.log(`[Audio] Grade ${grade} audio preloaded`);
+            console.log(`[Audio] Grade ${gradeNum} audio preloaded`);
         }
         
         // 播放单词音频（优先本地，降级到TTS）
@@ -1403,7 +1404,7 @@
             }
             
             // 本地没有，尝试动态加载
-            const grade = currentGrade;
+            const grade = currentGrade + 1; // currentGrade从0开始，目录从1开始(grade1, grade2...)
             const filename = getAudioFilename(word);
             const audioPath = `audio/grade${grade}/${filename}`;
             
