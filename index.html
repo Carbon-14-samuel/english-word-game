@@ -178,6 +178,7 @@
         .btn-upgrade { background: linear-gradient(135deg, #66BB6A, #43A047); box-shadow: 0 2px 6px rgba(102, 187, 106, 0.3); }
         .btn-collection { background: linear-gradient(135deg, #AB47BC, #8E24AA); box-shadow: 0 2px 6px rgba(171, 71, 188, 0.3); }
         .btn-achievements { background: linear-gradient(135deg, #FFA726, #FF9800); box-shadow: 0 2px 6px rgba(255, 167, 38, 0.3); }
+        .btn-parent { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3); color: white; border: none; padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: transform 0.2s; }
 
         .btn-downgrade:hover,
         .btn-upgrade:hover,
@@ -403,6 +404,88 @@
         .grade-section { margin-bottom: 20px; }
         .grade-title { font-size: 16px; font-weight: bold; color: #66BB6A; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 2px solid #66BB6A; }
         .grade-progress { font-size: 13px; color: #999; margin-bottom: 8px; }
+
+        /* 家长数据看板样式 */
+        .stats-dashboard {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            color: white;
+        }
+        .stats-dashboard h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            display: block;
+        }
+        .stat-label {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+        .mistake-highlight {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%) !important;
+        }
+        .mistake-list-compact {
+            max-height: 150px;
+            overflow-y: auto;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 8px;
+            margin-top: 10px;
+        }
+        .mistake-item-compact {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 6px;
+            margin: 4px 0;
+            font-size: 13px;
+        }
+        .mistake-item-compact .word { font-weight: bold; }
+        .mistake-item-compact .count {
+            background: rgba(255,255,255,0.3);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin: 15px 0 10px 0;
+            padding-left: 10px;
+            border-left: 4px solid #66BB6A;
+        }
+        .parent-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-left: 10px;
+        }
 
         /* 成就样式 */
         .achievement-item {
@@ -654,6 +737,7 @@
             <div class="header-row2">
                 <button class="btn-collection" onclick="showCollection()">📖 收藏本</button>
                 <button class="btn-achievements" onclick="showAchievements()">🏆 成就</button>
+                <button class="btn-parent" onclick="showParentDashboard()">👨‍👩‍👧 家长看板</button>
                 <button class="btn-hint" id="hintBtn" onclick="useHint()">💡 提示</button>
                 <button class="btn-upgrade" onclick="upgradeLevel()">↑ 升级</button>
                 <button class="btn-downgrade" onclick="downgradeLevel()">↓ 降级</button>
@@ -683,6 +767,15 @@
             <h2>📖 单词收藏本</h2>
             <div id="collectionContent"></div>
             <button class="close-btn" onclick="closeModal('collectionModal')">关闭</button>
+        </div>
+    </div>
+
+    <!-- 家长看板弹窗 -->
+    <div class="modal-overlay" id="parentModal">
+        <div class="modal" style="max-width: 500px;">
+            <h2>👨‍👩‍👧 家长看板</h2>
+            <div id="parentContent"></div>
+            <button class="close-btn" onclick="closeModal('parentModal')">关闭</button>
         </div>
     </div>
 
@@ -1147,9 +1240,12 @@
 
         function initGame() {
             currentGrade = getGradeForLevel(level);
-            const difficulty = getDifficultyForLevel(level);
-            currentPairs = difficulty.pairs;
-            currentCols = difficulty.cols;
+            // 只有在没有手动设置配对数时，才根据等级自动设置
+            if (!window.manualPairsSet) {
+                const difficulty = getDifficultyForLevel(level);
+                currentPairs = difficulty.pairs;
+                currentCols = difficulty.cols;
+            }
 
             lives = maxLives;
             combo = 0;
@@ -1625,7 +1721,37 @@
         function changePairs(pairs) {
             const newPairs = parseInt(pairs);
             
+            // 直接切换，不弹确认框
+            window.manualPairsSet = true;
+            currentPairs = newPairs;
+            currentCols = newPairs <= 8 ? 4 : 5;
+            
+            lives = maxLives;
+            combo = 0;
+            hintsRemaining = maxHints;
+            currentRoundErrors = 0;
+            matchedCount = 0;
+
+            initGame();
+            document.getElementById('pairsSelect').value = newPairs;
+
+            const levelUpText = document.getElementById('levelUpText');
+            levelUpText.textContent = `已切换到${newPairs}对`;
+            levelUpText.style.display = 'block';
+
+            setTimeout(() => {
+                levelUpText.style.display = 'none';
+            }, 1500);
+
+            saveData();
+        }
+        
+        // 保留旧函数作为备用
+        function changePairsOld(pairs) {
+            const newPairs = parseInt(pairs);
+
             if (confirm(`确定要切换到 ${newPairs}对 单词吗？\n切换将重新开始当前局。`)) {
+                window.manualPairsSet = true;
                 currentPairs = newPairs;
                 currentCols = newPairs <= 8 ? 4 : 5;
                 
@@ -1737,6 +1863,94 @@
 
             content.innerHTML = html;
             document.getElementById('collectionModal').classList.add('show');
+        }
+
+        // 家长看板功能
+        function showParentDashboard() {
+            const content = document.getElementById('parentContent');
+            
+            // 计算统计数据
+            let totalLearned = 0;
+            let totalMistakes = 0;
+            let allMistakes = [];
+            
+            for (let i = 0; i < 6; i++) {
+                const learned = learnedWords[i] || [];
+                const mistakes = mistakeWords[i] || [];
+                totalLearned += learned.length;
+                totalMistakes += mistakes.reduce((sum, m) => sum + m.count, 0);
+                
+                mistakes.forEach(m => {
+                    allMistakes.push({
+                        grade: gradeNames[i],
+                        en: m.en,
+                        cn: m.cn,
+                        count: m.count
+                    });
+                });
+            }
+            
+            // 按错误次数排序
+            allMistakes.sort((a, b) => b.count - a.count);
+            
+            // 今日数据（从stats中获取）
+            const todayGames = stats.gamesPlayed || 0;
+            const todayAccuracy = stats.totalAttempts > 0 
+                ? Math.round((stats.totalMatches / stats.totalAttempts) * 100) 
+                : 0;
+            
+            let html = '';
+            
+            // 今日学习概览
+            html += `<div class="stats-dashboard">`;
+            html += `<h3>📊 今日学习概览</h3>`;
+            html += `<div class="stats-grid">`;
+            html += `<div class="stat-card"><span class="stat-number">${todayGames}</span><span class="stat-label">游戏次数</span></div>`;
+            html += `<div class="stat-card"><span class="stat-number">${totalLearned}</span><span class="stat-label">累计学词</span></div>`;
+            html += `<div class="stat-card"><span class="stat-number">${todayAccuracy}%</span><span class="stat-label">正确率</span></div>`;
+            html += `</div></div>`;
+            
+            // 各年级进度
+            html += `<div class="section-title">📚 各年级学习进度</div>`;
+            html += `<div style="margin-bottom: 15px;">`;
+            for (let i = 0; i < 6; i++) {
+                const gradeWords = wordLibrary[`grade${i + 1}`];
+                const learned = learnedWords[i] || [];
+                const mistakes = mistakeWords[i] || [];
+                const progress = Math.round((learned.length / gradeWords.length) * 100);
+                const mistakeCount = mistakes.reduce((sum, m) => sum + m.count, 0);
+                
+                html += `<div style="margin-bottom: 12px; padding: 10px; background: #f5f5f5; border-radius: 8px;">`;
+                html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">`;
+                html += `<span style="font-weight: bold;">${gradeNames[i]}</span>`;
+                html += `<span style="color: #666;">${learned.length}/${gradeWords.length} 词</span>`;
+                html += `</div>`;
+                html += `<div style="background: #e0e0e0; border-radius: 10px; height: 8px; overflow: hidden;">`;
+                html += `<div style="background: linear-gradient(90deg, #66BB6A, #43A047); height: 100%; width: ${progress}%; border-radius: 10px;"></div>`;
+                html += `</div>`;
+                if (mistakeCount > 0) {
+                    html += `<div style="margin-top: 5px; font-size: 12px; color: #EF5350;">⚠️ 错误 ${mistakeCount} 次</div>`;
+                }
+                html += `</div>`;
+            }
+            html += `</div>`;
+            
+            // 重点关注（错词排行）
+            if (allMistakes.length > 0) {
+                html += `<div class="stats-dashboard mistake-highlight">`;
+                html += `<h3>⚠️ 重点关注（易错词）</h3>`;
+                html += `<div class="mistake-list-compact">`;
+                allMistakes.slice(0, 10).forEach(m => {
+                    html += `<div class="mistake-item-compact">`;
+                    html += `<span><span class="word">${m.en}</span> <span style="opacity: 0.8;">${m.cn}</span> <small>(${m.grade})</small></span>`;
+                    html += `<span class="count">错 ${m.count} 次</span>`;
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+            
+            content.innerHTML = html;
+            document.getElementById('parentModal').classList.add('show');
         }
 
         // 成就系统
