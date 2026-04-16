@@ -1319,32 +1319,56 @@
         }
 
         // TTS发音功能
+        let voicesLoaded = false;
+        let cachedVoices = [];
+        
+        function loadVoices() {
+            cachedVoices = window.speechSynthesis.getVoices();
+            if (cachedVoices.length > 0) {
+                voicesLoaded = true;
+            }
+        }
+        
         function speakWord(word) {
-            if ('speechSynthesis' in window) {
-                // 取消之前的语音
-                window.speechSynthesis.cancel();
-                
-                const utterance = new SpeechSynthesisUtterance(word);
-                utterance.lang = 'en-US';
-                utterance.rate = 0.9;
-                utterance.pitch = 1;
-                
-                // 尝试选择英语语音
-                const voices = window.speechSynthesis.getVoices();
-                const englishVoice = voices.find(v => v.lang.startsWith('en'));
+            if (!('speechSynthesis' in window)) return;
+            
+            // 取消之前的语音
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            
+            // 使用缓存的语音列表
+            if (voicesLoaded && cachedVoices.length > 0) {
+                const englishVoice = cachedVoices.find(v => v.lang && v.lang.startsWith('en'));
                 if (englishVoice) {
                     utterance.voice = englishVoice;
                 }
-                
-                window.speechSynthesis.speak(utterance);
             }
+            
+            // 某些浏览器需要用户交互后才能播放
+            // 使用 resume() 确保音频上下文已激活
+            if (window.speechSynthesis.paused) {
+                window.speechSynthesis.resume();
+            }
+            
+            window.speechSynthesis.speak(utterance);
         }
 
-        // 预加载语音列表
+        // 预加载语音列表 - 处理异步加载
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.getVoices();
-            // 某些浏览器需要延迟加载语音
-            setTimeout(() => window.speechSynthesis.getVoices(), 100);
+            loadVoices();
+            
+            // Chrome 需要等待 voiceschanged 事件
+            if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                window.speechSynthesis.onvoiceschanged = loadVoices;
+            }
+            
+            // 备用：延迟再次尝试加载
+            setTimeout(loadVoices, 500);
+            setTimeout(loadVoices, 1000);
         }
 
         function handleCellClick(index) {
