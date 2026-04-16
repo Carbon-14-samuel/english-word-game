@@ -1186,7 +1186,9 @@
             maxCombo: 0,
             perfectMatches: 0,
             fastestTime: null,
-            totalWordsLearned: 0
+            totalWordsLearned: 0,
+            totalAttempts: 0,
+            totalMatches: 0
         };
 
         // 已学单词和错词记录
@@ -1420,6 +1422,10 @@
                 showCombo(combo);
             }
 
+            // 统计正确尝试
+            stats.totalAttempts++;
+            stats.totalMatches++;
+
             updateUI();
             checkAchievements();
             saveData();
@@ -1477,6 +1483,10 @@
             currentRoundErrors++;
             lives--;
             combo = 0;
+
+            // 统计错误尝试
+            stats.totalAttempts++;
+
             updateUI();
 
             // 记录错词
