@@ -1325,13 +1325,68 @@
         let voicesLoaded = false;
         let cachedVoices = [];
         let ttsUserInteracted = false;
+        let ttsInitialized = false;
+        
+        // 检测是否是iOS设备
+        function isIOS() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        }
+        
+        // 检测是否是移动设备
+        function isMobile() {
+            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            console.log('[Device] Mobile check:', isMobileDevice, navigator.userAgent);
+            return isMobileDevice;
+        }
         
         // 标记用户已交互（解决自动播放策略限制）
         function markUserInteracted() {
             if (!ttsUserInteracted) {
                 ttsUserInteracted = true;
                 console.log('[TTS] User interacted, TTS enabled');
+                
+                // iOS需要额外的初始化
+                if (isIOS() && window.speechSynthesis && !ttsInitialized) {
+                    initTTSForIOS();
+                }
             }
+        }
+        
+        // iOS特殊初始化 - 需要创建一个空的utterance来解锁TTS
+        function initTTSForIOS() {
+            try {
+                const dummyUtterance = new SpeechSynthesisUtterance('');
+                dummyUtterance.volume = 0;
+                window.speechSynthesis.speak(dummyUtterance);
+                window.speechSynthesis.cancel();
+                ttsInitialized = true;
+                console.log('[TTS] iOS TTS initialized');
+            } catch (e) {
+                console.warn('[TTS] iOS init failed:', e);
+            }
+        }
+        
+        // 页面级别监听首次交互 - 确保TTS尽早解锁
+        function setupGlobalInteractionListeners() {
+            const events = ['touchstart', 'click', 'touchend'];
+            const handler = (e) => {
+                markUserInteracted();
+                // 移除监听器，只触发一次
+                events.forEach(evt => {
+                    document.removeEventListener(evt, handler, { capture: true });
+                });
+            };
+            
+            events.forEach(evt => {
+                document.addEventListener(evt, handler, { capture: true, passive: true });
+            });
+        }
+        
+        // 页面加载完成后设置全局监听
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupGlobalInteractionListeners);
+        } else {
+            setupGlobalInteractionListeners();
         }
         
         function loadVoices() {
@@ -1387,13 +1442,6 @@
             console.log(`[Audio] Grade ${grade} audio preloaded`);
         }
         
-        // 检测是否是移动设备
-        function isMobile() {
-            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            console.log('[Device] Mobile check:', isMobileDevice, navigator.userAgent);
-            return isMobileDevice;
-        }
-        
         // 播放单词音频（优先本地，降级到TTS）
         function speakWord(word) {
             console.log('[Audio] speakWord called:', word, 'UserInteracted:', ttsUserInteracted);
@@ -1401,7 +1449,14 @@
             // 移动端直接使用TTS，避免音频加载问题
             if (isMobile()) {
                 console.log('[Audio] Mobile detected, using TTS directly:', word);
-                speakWithTTS(word);
+                // 移动端：确保交互标记后立即播放，使用微任务确保状态更新
+                if (ttsUserInteracted) {
+                    speakWithTTS(word);
+                } else {
+                    // 如果还没标记，先标记然后延迟播放
+                    markUserInteracted();
+                    setTimeout(() => speakWithTTS(word), 50);
+                }
                 return;
             }
             
@@ -1450,7 +1505,7 @@
         
         // Web Speech API 降级方案
         function speakWithTTS(word) {
-            console.log('[TTS] speakWithTTS called:', word);
+            console.log('[TTS] speakWithTTS called:', word, 'interacted:', ttsUserInteracted);
             
             if (!('speechSynthesis' in window)) {
                 console.warn('[TTS] speechSynthesis not supported');
@@ -1464,37 +1519,64 @@
             }
             
             try {
-                if (window.speechSynthesis.speaking) {
-                    window.speechSynthesis.cancel();
+                // iOS特殊处理：先resume再speak
+                if (isIOS() && window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
                 }
                 
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                    // iOS需要短暂延迟后再播放新的
+                    if (isIOS()) {
+                        setTimeout(() => doSpeak(word), 50);
+                        return;
+                    }
+                }
+                
+                doSpeak(word);
+            } catch (e) {
+                console.error('[TTS] Failed to speak:', e);
+            }
+        }
+        
+        // 实际执行TTS播放
+        function doSpeak(word) {
+            try {
                 const utterance = new SpeechSynthesisUtterance(word);
                 utterance.lang = 'en-US';
-                utterance.rate = 0.9;
+                utterance.rate = 0.85; // 稍微慢一点，更清晰
                 utterance.pitch = 1;
                 utterance.volume = 1;
                 
+                // 选择英语语音（优先美式英语）
                 if (voicesLoaded && cachedVoices.length > 0) {
-                    const englishVoice = cachedVoices.find(v => v.lang && v.lang.startsWith('en'));
+                    const englishVoice = cachedVoices.find(v => 
+                        v.lang && (v.lang.startsWith('en-US') || v.lang.startsWith('en-GB') || v.lang.startsWith('en'))
+                    );
                     if (englishVoice) {
                         utterance.voice = englishVoice;
+                        console.log('[TTS] Using voice:', englishVoice.name);
                     }
                 }
+                
+                utterance.onstart = () => {
+                    console.log('[TTS] Started speaking:', word);
+                };
+                
+                utterance.onend = () => {
+                    console.log('[TTS] Finished speaking:', word);
+                };
                 
                 utterance.onerror = (e) => {
                     if (e.error !== 'interrupted' && e.error !== 'canceled') {
-                        console.warn('[TTS] Error:', e.error);
+                        console.warn('[TTS] Error:', e.error, e.message);
                     }
                 };
-                
-                if (window.speechSynthesis.paused) {
-                    window.speechSynthesis.resume();
-                }
                 
                 window.speechSynthesis.speak(utterance);
                 console.log('[TTS] Speaking:', word);
             } catch (e) {
-                console.error('[TTS] Failed to speak:', e);
+                console.error('[TTS] doSpeak failed:', e);
             }
         }
 
@@ -1513,15 +1595,24 @@
 
         function handleCellClick(index) {
             if (isProcessing) return;
+            
+            // 先标记用户交互（对TTS至关重要）
+            markUserInteracted();
             initAudio();
-            markUserInteracted(); // 标记用户已交互（启用TTS）
 
             const cellElement = document.querySelector(`.cell[data-index="${index}"]`);
             const cell = grid[index];
 
-            // 点击英文卡片时播放发音
+            // 点击英文卡片时播放发音（移动端延迟一点确保交互标记完成）
             if (cell && cell.type === 'en') {
-                speakWord(cell.text);
+                if (isMobile()) {
+                    // 移动端：确保交互标记后播放
+                    requestAnimationFrame(() => {
+                        speakWord(cell.text);
+                    });
+                } else {
+                    speakWord(cell.text);
+                }
             }
 
             if (selectedCell === index) {
