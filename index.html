@@ -1356,8 +1356,10 @@
             }
             
             try {
-                // 取消之前的语音
-                window.speechSynthesis.cancel();
+                // 取消之前的语音（使用延迟避免中断当前播放）
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                }
                 
                 const utterance = new SpeechSynthesisUtterance(word);
                 utterance.lang = 'en-US';
@@ -1376,7 +1378,13 @@
                 
                 // 事件监听（用于调试）
                 utterance.onstart = () => console.log('[TTS] Speaking:', word);
-                utterance.onerror = (e) => console.warn('[TTS] Error:', e.error);
+                utterance.onend = () => console.log('[TTS] Finished:', word);
+                utterance.onerror = (e) => {
+                    // 忽略 interrupted 错误（用户快速切换时正常）
+                    if (e.error !== 'interrupted' && e.error !== 'canceled') {
+                        console.warn('[TTS] Error:', e.error);
+                    }
+                };
                 
                 // 某些浏览器需要用户交互后才能播放
                 if (window.speechSynthesis.paused) {
