@@ -1389,11 +1389,15 @@
         
         // 检测是否是移动设备
         function isMobile() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            console.log('[Device] Mobile check:', isMobileDevice, navigator.userAgent);
+            return isMobileDevice;
         }
         
         // 播放单词音频（优先本地，降级到TTS）
         function speakWord(word) {
+            console.log('[Audio] speakWord called:', word, 'UserInteracted:', ttsUserInteracted);
+            
             // 移动端直接使用TTS，避免音频加载问题
             if (isMobile()) {
                 console.log('[Audio] Mobile detected, using TTS directly:', word);
@@ -1446,8 +1450,16 @@
         
         // Web Speech API 降级方案
         function speakWithTTS(word) {
+            console.log('[TTS] speakWithTTS called:', word);
+            
             if (!('speechSynthesis' in window)) {
                 console.warn('[TTS] speechSynthesis not supported');
+                return;
+            }
+            
+            // iOS/Safari 需要用户交互后才能播放 TTS
+            if (!ttsUserInteracted) {
+                console.warn('[TTS] User has not interacted yet, cannot speak');
                 return;
             }
             
