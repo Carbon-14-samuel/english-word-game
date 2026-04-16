@@ -1366,7 +1366,8 @@
             for (const item of gradeWords) {
                 const word = item.en;
                 const filename = getAudioFilename(word);
-                const audioPath = `audio/grade${gradeNum}/${filename}`;
+                // 使用 jsDelivr CDN 避免 CORS 问题
+                const audioPath = `https://cdn.jsdelivr.net/gh/Carbon-14-samuel/english-word-game@main/audio/grade${gradeNum}/${filename}`;
                 
                 if (!audioCache[word]) {
                     const audio = new Audio(audioPath);
@@ -1406,7 +1407,8 @@
             // 本地没有，尝试动态加载
             const grade = currentGrade + 1; // currentGrade从0开始，目录从1开始(grade1, grade2...)
             const filename = getAudioFilename(word);
-            const audioPath = `audio/grade${grade}/${filename}`;
+            // 使用 jsDelivr CDN 避免 CORS 问题
+            const audioPath = `https://cdn.jsdelivr.net/gh/Carbon-14-samuel/english-word-game@main/audio/grade${grade}/${filename}`;
             
             const audio = new Audio(audioPath);
             audioCache[word] = audio;
