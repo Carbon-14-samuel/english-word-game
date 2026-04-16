@@ -1325,12 +1325,11 @@
         
         // 标记用户已交互（解决自动播放策略限制）
         function markUserInteracted() {
-            ttsUserInteracted = true;
+            if (!ttsUserInteracted) {
+                ttsUserInteracted = true;
+                console.log('[TTS] User interacted, TTS enabled');
+            }
         }
-        // 监听各种用户交互事件
-        ['click', 'touchstart', 'keydown'].forEach(evt => {
-            document.addEventListener(evt, markUserInteracted, { once: true });
-        });
         
         function loadVoices() {
             try {
@@ -1413,6 +1412,7 @@
         function handleCellClick(index) {
             if (isProcessing) return;
             initAudio();
+            markUserInteracted(); // 标记用户已交互（启用TTS）
 
             const cellElement = document.querySelector(`.cell[data-index="${index}"]`);
             const cell = grid[index];
