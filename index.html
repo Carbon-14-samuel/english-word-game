@@ -1258,6 +1258,9 @@
             matchedCount = 0;
             createGrid();
             updateUI();
+            
+            // 预加载当前年级的音频（异步，不阻塞游戏）
+            preloadGradeAudio(currentGrade);
         }
 
         function createGrid() {
@@ -1343,19 +1346,90 @@
             }
         }
         
+        // 音频缓存对象
+        const audioCache = {};
+        let currentAudio = null;
+        
+        // 获取音频文件名（小写，空格替换为下划线）
+        function getAudioFilename(word) {
+            return word.toLowerCase().replace(/\s+/g, '_') + '.mp3';
+        }
+        
+        // 预加载当前年级的音频
+        async function preloadGradeAudio(grade) {
+            const gradeWords = vocabulary[grade];
+            if (!gradeWords) return;
+            
+            console.log(`[Audio] Preloading grade ${grade} audio...`);
+            
+            for (const item of gradeWords) {
+                const word = item.en;
+                const filename = getAudioFilename(word);
+                const audioPath = `audio/grade${grade}/${filename}`;
+                
+                if (!audioCache[word]) {
+                    const audio = new Audio(audioPath);
+                    audio.preload = 'auto';
+                    audioCache[word] = audio;
+                }
+            }
+            
+            console.log(`[Audio] Grade ${grade} audio preloaded`);
+        }
+        
+        // 播放单词音频（优先本地，降级到TTS）
         function speakWord(word) {
+            // 先停止当前播放的音频
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+            }
+            
+            // 尝试使用本地音频
+            const cachedAudio = audioCache[word];
+            if (cachedAudio) {
+                currentAudio = cachedAudio;
+                currentAudio.currentTime = 0;
+                const playPromise = currentAudio.play();
+                if (playPromise) {
+                    playPromise.catch(e => {
+                        console.warn('[Audio] Local audio failed:', e);
+                        // 本地音频失败，降级到TTS
+                        speakWithTTS(word);
+                    });
+                }
+                console.log('[Audio] Playing local:', word);
+                return;
+            }
+            
+            // 本地没有，尝试动态加载
+            const grade = currentGrade;
+            const filename = getAudioFilename(word);
+            const audioPath = `audio/grade${grade}/${filename}`;
+            
+            const audio = new Audio(audioPath);
+            audioCache[word] = audio;
+            currentAudio = audio;
+            
+            const playPromise = audio.play();
+            if (playPromise) {
+                playPromise.catch(e => {
+                    console.warn('[Audio] Dynamic load failed:', e);
+                    // 动态加载失败，降级到TTS
+                    speakWithTTS(word);
+                });
+            }
+            console.log('[Audio] Playing dynamic:', word);
+        }
+        
+        // Web Speech API 降级方案
+        function speakWithTTS(word) {
             if (!('speechSynthesis' in window)) {
                 console.warn('[TTS] speechSynthesis not supported');
                 return;
             }
             
-            // 某些浏览器要求用户必须先交互
-            if (!ttsUserInteracted) {
-                console.log('[TTS] Waiting for user interaction...');
-            }
-            
             try {
-                // 取消之前的语音（使用延迟避免中断当前播放）
                 if (window.speechSynthesis.speaking) {
                     window.speechSynthesis.cancel();
                 }
@@ -1366,31 +1440,25 @@
                 utterance.pitch = 1;
                 utterance.volume = 1;
                 
-                // 使用缓存的语音列表
                 if (voicesLoaded && cachedVoices.length > 0) {
                     const englishVoice = cachedVoices.find(v => v.lang && v.lang.startsWith('en'));
                     if (englishVoice) {
                         utterance.voice = englishVoice;
-                        console.log('[TTS] Using voice:', englishVoice.name);
                     }
                 }
                 
-                // 事件监听（用于调试）
-                utterance.onstart = () => console.log('[TTS] Speaking:', word);
-                utterance.onend = () => console.log('[TTS] Finished:', word);
                 utterance.onerror = (e) => {
-                    // 忽略 interrupted 错误（用户快速切换时正常）
                     if (e.error !== 'interrupted' && e.error !== 'canceled') {
                         console.warn('[TTS] Error:', e.error);
                     }
                 };
                 
-                // 某些浏览器需要用户交互后才能播放
                 if (window.speechSynthesis.paused) {
                     window.speechSynthesis.resume();
                 }
                 
                 window.speechSynthesis.speak(utterance);
+                console.log('[TTS] Speaking:', word);
             } catch (e) {
                 console.error('[TTS] Failed to speak:', e);
             }
