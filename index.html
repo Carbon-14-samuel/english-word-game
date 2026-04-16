@@ -1387,8 +1387,20 @@
             console.log(`[Audio] Grade ${grade} audio preloaded`);
         }
         
+        // 检测是否是移动设备
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+        
         // 播放单词音频（优先本地，降级到TTS）
         function speakWord(word) {
+            // 移动端直接使用TTS，避免音频加载问题
+            if (isMobile()) {
+                console.log('[Audio] Mobile detected, using TTS directly:', word);
+                speakWithTTS(word);
+                return;
+            }
+            
             // 先停止当前播放的音频
             if (currentAudio) {
                 currentAudio.pause();
