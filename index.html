@@ -706,20 +706,43 @@
     </style>
 </head>
 <body>
-    <!-- 音频预加载界面 -->
-    <div id="preloadModal" class="modal show" style="z-index: 9999;">
-        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px;">
-            <div style="font-size: 48px; margin-bottom: 15px;">🎮</div>
-            <h2 style="color: #2E7D32; margin-bottom: 10px;">小学英语单词配对</h2>
-            <p style="color: #666; margin-bottom: 20px; font-size: 14px;">点击下方按钮开始游戏<br>首次加载需要几秒钟</p>
-            <button id="startGameBtn" onclick="startGameWithPreload()" style="background: linear-gradient(135deg, #66BB6A, #43A047); color: white; border: none; padding: 15px 40px; border-radius: 25px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 187, 106, 0.4); transition: all 0.3s;">
-                开始游戏
-            </button>
-            <div id="preloadStatus" style="margin-top: 15px; color: #888; font-size: 12px; display: none;">
-                正在加载音频资源...
+    <!-- 游戏开始界面 -->
+    <div id="startModal" class="modal show" style="z-index: 9999;">
+        <div class="modal-content" style="max-width: 420px; text-align: center; padding: 30px;">
+            <div style="font-size: 56px; margin-bottom: 10px;">🎮</div>
+            <h2 style="color: #2E7D32; margin-bottom: 15px; font-size: 24px;">小学英语单词配对</h2>
+            
+            <div style="text-align: left; background: #f5f5f5; border-radius: 12px; padding: 15px; margin-bottom: 20px; font-size: 13px; color: #555; line-height: 1.6;">
+                <p style="margin-bottom: 8px;"><strong>🎯 游戏玩法：</strong></p>
+                <p style="margin-bottom: 5px; padding-left: 10px;">• 点击卡片翻开，匹配英文单词和中文意思</p>
+                <p style="margin-bottom: 5px; padding-left: 10px;">• 配对成功获得分数，连续配对有连击奖励</p>
+                <p style="margin-bottom: 5px; padding-left: 10px;">• 完成关卡升级，解锁更高年级词汇</p>
+                <p style="padding-left: 10px;">• 收集单词到收藏本，随时复习巩固</p>
             </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button onclick="startGameDirectly()" style="background: linear-gradient(135deg, #66BB6A, #43A047); color: white; border: none; padding: 14px 28px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 187, 106, 0.4); transition: all 0.3s; flex: 1; min-width: 120px;">
+                    🚀 直接开始
+                </button>
+                <button onclick="startWithAudioDownload()" style="background: linear-gradient(135deg, #42A5F5, #1E88E5); color: white; border: none; padding: 14px 28px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(66, 165, 245, 0.4); transition: all 0.3s; flex: 1; min-width: 120px;">
+                    📥 下载音频
+                </button>
+            </div>
+            
+            <div id="downloadStatus" style="margin-top: 15px; color: #666; font-size: 12px; display: none;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span class="loading-spinner" style="display: inline-block; width: 16px; height: 16px; border: 2px solid #ddd; border-top-color: #42A5F5; border-radius: 50%; animation: spin 1s linear infinite;"></span>
+                    <span id="downloadText">正在下载音频...</span>
+                </div>
+                <div id="downloadProgress" style="margin-top: 8px; font-size: 11px; color: #888;"></div>
+            </div>
+            
+            <p style="margin-top: 15px; font-size: 11px; color: #999;">
+                💡 提示：下载音频后发音更流畅，不下载则使用在线语音
+            </p>
         </div>
     </div>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 
     <div class="game-container" id="gameContainer" style="display: none;">
         <div class="header">
@@ -1255,62 +1278,102 @@
             return { pairs: 12, cols: 5 };
         }
 
-        // 用户点击开始游戏，预加载音频后进入
-        async function startGameWithPreload() {
-            // 标记用户已交互（解锁音频自动播放）
+        // 直接开始游戏（不下载音频）
+        function startGameDirectly() {
             markUserInteracted();
             initAudio();
             
-            const btn = document.getElementById('startGameBtn');
-            const status = document.getElementById('preloadStatus');
-            
-            btn.style.display = 'none';
-            status.style.display = 'block';
-            status.textContent = '正在准备游戏...';
-            
-            // 先显示游戏界面（不阻塞）
-            document.getElementById('preloadModal').classList.remove('show');
+            document.getElementById('startModal').classList.remove('show');
             document.getElementById('gameContainer').style.display = 'block';
             
-            // 初始化游戏（这会确定当前需要哪些单词）
             initGame();
-            
-            // 后台预加载当前关卡需要的音频（不阻塞游戏）
-            preloadCurrentLevelAudio();
         }
         
-        // 预加载当前关卡需要的音频（后台非阻塞）
-        function preloadCurrentLevelAudio() {
-            if (!grid || grid.length === 0) return;
+        // 下载音频后开始游戏
+        async function startWithAudioDownload() {
+            markUserInteracted();
+            initAudio();
             
-            // 提取当前关卡所有单词
-            const currentWords = new Set();
-            grid.forEach(cell => {
-                if (cell && cell.word) {
-                    currentWords.add(cell.word);
-                }
-            });
+            const downloadStatus = document.getElementById('downloadStatus');
+            const downloadText = document.getElementById('downloadText');
+            const downloadProgress = document.getElementById('downloadProgress');
             
-            console.log(`[Preload] Loading ${currentWords.size} audio files for current level`);
+            downloadStatus.style.display = 'block';
+            downloadText.textContent = '正在下载音频...';
             
+            // 下载当前年级的所有音频
             const grade = getGradeForLevel(level);
-            const gradeNum = grade + 1;
-            
-            currentWords.forEach(word => {
-                if (audioCache[word]) return;
-                
-                const filename = getAudioFilename(word);
-                const audioPath = getAudioPath(gradeNum, filename);
-                
-                const audio = new Audio(audioPath);
-                audio.preload = 'auto';
-                
-                audio.addEventListener('canplaythrough', () => {
-                    audioCache[word] = audio;
-                }, { once: true });
-                
-                audio.load();
+            const downloaded = await downloadGradeAudio(grade, (current, total) => {
+                downloadProgress.textContent = `${current}/${total}`;
             });
+            
+            downloadText.textContent = `下载完成！${downloaded} 个音频已缓存`;
+            
+            setTimeout(() => {
+                document.getElementById('startModal').classList.remove('show');
+                document.getElementById('gameContainer').style.display = 'block';
+                initGame();
+            }, 800);
+        }
+        
+        // 下载整个年级的音频（带进度回调）
+        async function downloadGradeAudio(grade, onProgress) {
+            const gradeWords = wordLibrary[`grade${grade + 1}`];
+            if (!gradeWords) return 0;
+            
+            const gradeNum = grade + 1;
+            let downloaded = 0;
+            const total = gradeWords.length;
+            
+            const promises = gradeWords.map((item, index) => {
+                return new Promise((resolve) => {
+                    const word = item.en;
+                    if (audioCache[word]) {
+                        downloaded++;
+                        if (onProgress) onProgress(downloaded, total);
+                        resolve();
+                        return;
+                    }
+                    
+                    const filename = getAudioFilename(word);
+                    const audioPath = getAudioPath(gradeNum, filename);
+                    
+                    const audio = new Audio(audioPath);
+                    audio.preload = 'auto';
+                    
+                    audio.addEventListener('canplaythrough', () => {
+                        audioCache[word] = audio;
+                        downloaded++;
+                        if (onProgress) onProgress(downloaded, total);
+                        resolve();
+                    }, { once: true });
+                    
+                    audio.addEventListener('error', () => {
+                        // 下载失败也继续
+                        downloaded++;
+                        if (onProgress) onProgress(downloaded, total);
+                        resolve();
+                    }, { once: true });
+                    
+                    // 超时继续（3秒）
+                    setTimeout(() => {
+                        downloaded++;
+                        if (onProgress) onProgress(downloaded, total);
+                        resolve();
+                    }, 3000);
+                    
+                    audio.load();
+                });
+            });
+            
+            // 分批下载，避免同时请求过多
+            const batchSize = 15;
+            for (let i = 0; i < promises.length; i += batchSize) {
+                const batch = promises.slice(i, i + batchSize);
+                await Promise.all(batch);
+            }
+            
+            return downloaded;
         }
         
         function initGame() {
