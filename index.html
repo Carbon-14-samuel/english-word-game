@@ -711,17 +711,11 @@
 </head>
 <body>
     <!-- 游戏开始界面 -->
-    <div id="startModal" class="modal show" style="z-index: 9999;">
-        <div class="modal-content" style="max-width: 420px; text-align: center; padding: 30px;">
-            <div style="font-size: 56px; margin-bottom: 10px;">🎮</div>
-            <h2 style="color: #2E7D32; margin-bottom: 15px; font-size: 24px;">小学英语单词配对</h2>
-            
-            <button onclick="startGameDirectly()" style="background: linear-gradient(135deg, #66BB6A, #43A047); color: white; border: none; padding: 16px 50px; border-radius: 25px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 187, 106, 0.4); transition: all 0.3s; margin-top: 10px;">
-                🚀 开始游戏
-            </button>
-        </div>
+    <div id="startOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+        <button onclick="startGameDirectly()" style="background: linear-gradient(135deg, #66BB6A, #43A047); color: white; border: none; padding: 20px 60px; border-radius: 30px; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.3); transition: all 0.3s;">
+            🚀 开始游戏
+        </button>
     </div>
-    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 
     <div class="game-container" id="gameContainer" style="display: none;">
         <div class="header">
@@ -1263,7 +1257,7 @@
             markUserInteracted();
             initAudio();
             
-            document.getElementById('startModal').classList.remove('show');
+            document.getElementById('startOverlay').style.display = 'none';
             document.getElementById('gameContainer').style.display = 'block';
             
             initGame();
