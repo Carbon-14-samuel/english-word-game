@@ -76,6 +76,26 @@
             font-size: 13px;
         }
 
+        .intro-toggle-btn {
+            background: linear-gradient(135deg, #42A5F5, #1E88E5);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(66, 165, 245, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .intro-toggle-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .intro-toggle-btn:active {
+            transform: scale(0.95);
+        }
+
         .grade-select {
             background: linear-gradient(135deg, #26C6DA, #00ACC1);
             color: white;
@@ -734,7 +754,7 @@
 
     <div class="game-container" id="gameContainer" style="display: none;">
         <div class="header">
-            <div class="grade-badge" id="gradeDisplay" onclick="toggleIntro()" style="cursor: pointer; background: linear-gradient(135deg, #42A5F5, #1E88E5);">📖 游戏介绍</div>
+            <div class="intro-toggle-btn" id="introToggleBtn" onclick="toggleIntro()">📖 游戏介绍</div>
             <div class="header-row1">
                 <select class="grade-select" id="gradeSelect" onchange="changeGrade(this.value)">
                     <option value="0">一年级</option>
