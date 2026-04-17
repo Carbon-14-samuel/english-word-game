@@ -76,24 +76,77 @@
             font-size: 13px;
         }
 
-        .intro-toggle-btn {
+        /* 游戏介绍标题栏 */
+        .intro-header-bar {
             background: linear-gradient(135deg, #42A5F5, #1E88E5);
             color: white;
-            padding: 6px 12px;
+            padding: 12px 15px;
             border-radius: 15px;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 15px;
             cursor: pointer;
-            box-shadow: 0 2px 6px rgba(66, 165, 245, 0.3);
+            box-shadow: 0 3px 10px rgba(66, 165, 245, 0.3);
             transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
         }
 
-        .intro-toggle-btn:hover {
-            transform: scale(1.05);
+        .intro-header-bar:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(66, 165, 245, 0.4);
         }
 
-        .intro-toggle-btn:active {
-            transform: scale(0.95);
+        .intro-header-bar:active {
+            transform: translateY(0);
+        }
+
+        .intro-icon {
+            font-size: 16px;
+        }
+
+        .intro-title-text {
+            flex: 1;
+            text-align: left;
+            margin-left: 8px;
+        }
+
+        .intro-arrow {
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .intro-header-bar.expanded .intro-arrow {
+            transform: rotate(180deg);
+        }
+
+        /* 游戏介绍内容面板 */
+        .intro-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 15px 20px;
+            margin-bottom: 12px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .intro-panel-content {
+            text-align: left;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.7;
+        }
+
+        .intro-panel-title {
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+            font-size: 15px;
+        }
+
+        .intro-panel-item {
+            margin-bottom: 6px;
+            padding-left: 5px;
         }
 
         .grade-select {
@@ -733,8 +786,25 @@
 
 
     <div class="game-container" id="gameContainer" style="display: none;">
+        <!-- 游戏介绍标题栏 -->
+        <div class="intro-header-bar" id="introHeaderBar" onclick="toggleIntro()">
+            <span class="intro-icon">📖</span>
+            <span class="intro-title-text">游戏介绍</span>
+            <span class="intro-arrow" id="introArrow">▼</span>
+        </div>
+        
+        <!-- 游戏介绍内容面板 -->
+        <div class="intro-panel" id="introPanel" style="display: none;">
+            <div class="intro-panel-content">
+                <p class="intro-panel-title">🎯 游戏玩法：</p>
+                <p class="intro-panel-item">• 点击卡片翻开，匹配英文单词和中文意思</p>
+                <p class="intro-panel-item">• 配对成功获得分数，连续配对有连击奖励</p>
+                <p class="intro-panel-item">• 完成关卡升级，解锁更高年级词汇</p>
+                <p class="intro-panel-item">• 收集单词到收藏本，随时复习巩固</p>
+            </div>
+        </div>
+
         <div class="header">
-            <div class="intro-toggle-btn" id="introToggleBtn" onclick="toggleIntro()">📖 游戏介绍</div>
             <div class="header-row1">
                 <select class="grade-select" id="gradeSelect" onchange="changeGrade(this.value)">
                     <option value="0">一年级</option>
@@ -768,17 +838,6 @@
                 <button class="btn-hint" id="hintBtn" onclick="useHint()">💡 提示</button>
                 <button class="btn-upgrade" onclick="upgradeLevel()">↑ 升级</button>
                 <button class="btn-downgrade" onclick="downgradeLevel()">↓ 降级</button>
-            </div>
-        </div>
-
-        <!-- 游戏介绍下拉面板 -->
-        <div id="introDropdown" class="intro-dropdown" style="display: block;">
-            <div style="text-align: left; background: #f8f8f8; border-radius: 10px; padding: 15px; margin: 10px 0; font-size: 13px; color: #555; line-height: 1.6;">
-                <p style="margin-bottom: 8px;"><strong>🎯 游戏玩法：</strong></p>
-                <p style="margin-bottom: 5px; padding-left: 8px;">• 点击卡片翻开，匹配英文单词和中文意思</p>
-                <p style="margin-bottom: 5px; padding-left: 8px;">• 配对成功获得分数，连续配对有连击奖励</p>
-                <p style="margin-bottom: 5px; padding-left: 8px;">• 完成关卡升级，解锁更高年级词汇</p>
-                <p style="padding-left: 8px;">• 收集单词到收藏本，随时复习巩固</p>
             </div>
         </div>
 
@@ -1118,7 +1177,12 @@
         let audioCtx = null;
 
         function initAudio() {
-            if (!audioCtx) audioCtx = new AudioContext();
+            try {
+                if (!audioCtx) audioCtx = new AudioContext();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            } catch(e) {
+                console.error('[Audio] initAudio error:', e);
+            }
         }
 
         function playSound(type) {
@@ -1280,14 +1344,17 @@
 
         // 展开/切换介绍面板
         function toggleIntro() {
-            const dropdown = document.getElementById('introDropdown');
-            const btn = document.getElementById('introToggleBtn');
-            if (dropdown.style.display === 'none') {
-                dropdown.style.display = 'block';
-                btn.textContent = '📖 游戏介绍';
+            const panel = document.getElementById('introPanel');
+            const header = document.getElementById('introHeaderBar');
+            const arrow = document.getElementById('introArrow');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                header.classList.add('expanded');
+                arrow.textContent = '▲';
             } else {
-                dropdown.style.display = 'none';
-                btn.textContent = '📖 游戏介绍';
+                panel.style.display = 'none';
+                header.classList.remove('expanded');
+                arrow.textContent = '▼';
             }
         }
         
@@ -1381,6 +1448,8 @@
             hintsRemaining = maxHints;
             currentRoundErrors = 0;
             roundStartTime = Date.now();
+            selectedCell = null;
+            isProcessing = false;
 
             matchedCount = 0;
             const shuffledPairs = createGrid();
@@ -1763,7 +1832,21 @@
         }
 
         function handleCellClick(index) {
-            if (isProcessing) return;
+            if (isProcessing) {
+                // 安全超时：如果 isProcessing 卡住超过3秒，强制重置
+                if (!window._processingStart) {
+                    window._processingStart = Date.now();
+                } else if (Date.now() - window._processingStart > 3000) {
+                    console.warn('[Game] isProcessing timeout, force reset');
+                    isProcessing = false;
+                    selectedCell = null;
+                    window._processingStart = null;
+                } else {
+                    return;
+                }
+            } else {
+                window._processingStart = null;
+            }
             
             // 先标记用户交互（对TTS至关重要）
             markUserInteracted();
@@ -1802,6 +1885,7 @@
 
         function matchSuccess(idx1, idx2) {
             isProcessing = true;
+            window._processingStart = Date.now();
             playSound('match');
 
             const cell1 = document.querySelector(`.cell[data-index="${idx1}"]`);
@@ -1844,9 +1928,13 @@
             stats.totalAttempts++;
             stats.totalMatches++;
 
-            updateUI();
-            checkAchievements();
-            saveData();
+            try {
+                updateUI();
+                checkAchievements();
+                saveData();
+            } catch(e) {
+                console.error('[Game] Error in success callbacks:', e);
+            }
 
             if (exp >= expToNextLevel) {
                 setTimeout(() => {
@@ -1856,11 +1944,16 @@
             }
 
             setTimeout(() => {
-                cell1.style.visibility = 'hidden';
-                cell2.style.visibility = 'hidden';
+                try {
+                    cell1.style.visibility = 'hidden';
+                    cell2.style.visibility = 'hidden';
+                } catch(e) {
+                    console.error('[Game] Error hiding cells:', e);
+                }
 
                 selectedCell = null;
                 isProcessing = false;
+                window._processingStart = null;
 
                 if (matchedCount >= currentPairs * 2) {
                     const roundTime = (Date.now() - roundStartTime) / 1000;
@@ -2457,7 +2550,7 @@
 
         // 初始化
         initData();
-        initGame();
+        // initGame() 在 window.load 事件中调用，避免重复初始化
 
         // 首次使用显示新手引导
         if (!localStorage.getItem('wordGameGuideShown')) {
