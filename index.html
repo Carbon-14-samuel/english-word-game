@@ -1474,7 +1474,10 @@
         }
         
         function initGame() {
-            currentGrade = getGradeForLevel(level);
+            // 只有用户没有手动选年级时，才根据等级自动设置年级
+            if (!window.manualGradeSet) {
+                currentGrade = getGradeForLevel(level);
+            }
             // 只有在没有手动设置配对数时，才根据等级自动设置
             if (!window.manualPairsSet) {
                 const difficulty = getDifficultyForLevel(level);
@@ -1655,7 +1658,8 @@
             if (isGitHubPages) {
                 return `https://cdn.jsdelivr.net/gh/Carbon-14-samuel/english-word-game@main/audio/grade${grade}/${filename}`;
             }
-            return `audio/grade${grade}/${filename}`;
+            // 本地文件：HTML 在 腾讯小龙虾/ 下，音频在 腾讯小龙虾/english-word-game/audio/ 下
+            return `english-word-game/audio/grade${grade}/${filename}`;
         }
         
         // 预加载当前游戏用到的单词音频（只加载当前格子里的单词）
@@ -2022,6 +2026,8 @@
         }
 
         function matchFail(idx1, idx2) {
+            isProcessing = true;
+            window._processingStart = Date.now();
             playSound('wrong');
 
             const cell1 = document.querySelector(`.cell[data-index="${idx1}"]`);
@@ -2032,6 +2038,7 @@
 
             currentRoundErrors++;
             lives--;
+            console.log('[Game] Match failed! lives:', lives, 'maxLives:', maxLives);
             combo = 0;
 
             // 统计错误尝试
@@ -2060,6 +2067,8 @@
                 cell1.classList.remove('selected', 'wrong');
                 cell2.classList.remove('wrong');
                 selectedCell = null;
+                isProcessing = false;
+                window._processingStart = null;
             }, 400);
         }
 
@@ -2149,7 +2158,8 @@
             level++;
             const newGrade = getGradeForLevel(level);
 
-            if (newGrade > currentGrade) {
+            // 只有用户没有手动选年级时，才自动切换年级
+            if (!window.manualGradeSet && newGrade > currentGrade) {
                 currentGrade = newGrade;
             }
 
@@ -2244,11 +2254,7 @@
             // 确认切换
             if (confirm(`确定要切换到${gradeNames[newGrade]}吗？\n切换年级将重新开始当前局。`)) {
                 currentGrade = newGrade;
-                
-                // 根据年级设置初始等级（每个年级10关）
-                level = newGrade * 10 + 1;
-                exp = 0;
-                expToNextLevel = 100;
+                window.manualGradeSet = true;
                 
                 // 重置当前关卡的游戏状态
                 lives = maxLives;
@@ -2341,7 +2347,6 @@
         function updateUI() {
             document.getElementById('score').textContent = score;
             document.getElementById('level').textContent = level;
-            document.getElementById('gradeDisplay').textContent = gradeNames[currentGrade];
             document.getElementById('gradeBadge').textContent = gradeNames[currentGrade];
             document.getElementById('gradeSelect').value = currentGrade;
             document.getElementById('pairsSelect').value = currentPairs;
@@ -2352,6 +2357,7 @@
 
             const livesDisplay = document.getElementById('livesDisplay');
             const hearts = livesDisplay.querySelectorAll('.heart');
+            console.log('[Game] updateUI hearts:', hearts.length, 'lives:', lives);
             hearts.forEach((heart, index) => {
                 if (index < lives) {
                     heart.classList.remove('lost');
