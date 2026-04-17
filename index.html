@@ -710,11 +710,22 @@
     </style>
 </head>
 <body>
-    <!-- 游戏开始界面 -->
-    <div id="startOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 9999; display: flex; align-items: center; justify-content: center;">
-        <button onclick="startGameDirectly()" style="background: linear-gradient(135deg, #66BB6A, #43A047); color: white; border: none; padding: 20px 60px; border-radius: 30px; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.3); transition: all 0.3s;">
-            🚀 开始游戏
-        </button>
+    <!-- 游戏介绍弹窗 -->
+    <div id="introModal" class="modal show" style="z-index: 9999;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 25px;">
+            <div style="font-size: 48px; margin-bottom: 10px;">🎮</div>
+            <h2 style="color: #2E7D32; margin-bottom: 15px;">小学英语单词配对</h2>
+            <div style="text-align: left; background: #f8f8f8; border-radius: 10px; padding: 15px; margin-bottom: 20px; font-size: 13px; color: #555; line-height: 1.6;">
+                <p style="margin-bottom: 8px;"><strong>🎯 游戏玩法：</strong></p>
+                <p style="margin-bottom: 5px; padding-left: 8px;">• 点击卡片翻开，匹配英文单词和中文意思</p>
+                <p style="margin-bottom: 5px; padding-left: 8px;">• 配对成功获得分数，连续配对有连击奖励</p>
+                <p style="margin-bottom: 5px; padding-left: 8px;">• 完成关卡升级，解锁更高年级词汇</p>
+                <p style="padding-left: 8px;">• 收集单词到收藏本，随时复习巩固</p>
+            </div>
+            <button onclick="closeIntroAndStart()" style="background: linear-gradient(135deg, #66BB6A, #43A047); color: white; border: none; padding: 12px 40px; border-radius: 20px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 10px rgba(102, 187, 106, 0.4);">
+                知道了，开始玩！
+            </button>
+        </div>
     </div>
 
     <div class="game-container" id="gameContainer" style="display: none;">
@@ -1252,16 +1263,19 @@
             return { pairs: 12, cols: 5 };
         }
 
-        // 直接开始游戏
-        function startGameDirectly() {
+        // 关闭介绍弹窗并开始游戏
+        function closeIntroAndStart() {
             markUserInteracted();
             initAudio();
             
-            document.getElementById('startOverlay').style.display = 'none';
-            document.getElementById('gameContainer').style.display = 'block';
-            
-            initGame();
+            document.getElementById('introModal').classList.remove('show');
         }
+        
+        // 页面加载完成后自动显示游戏
+        window.addEventListener('load', () => {
+            document.getElementById('gameContainer').style.display = 'block';
+            initGame();
+        });
         
         // 下载当前年级的音频
         async function downloadAudio() {
