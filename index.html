@@ -176,21 +176,49 @@
         .intro-panel-content {
             text-align: left;
             font-size: 14px;
-            color: #555;
-            line-height: 1.7;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .intro-panel-title {
-            margin-bottom: 10px;
+            margin-bottom: 6px;
             font-weight: bold;
-            color: #333;
+            color: #E65100;
             font-size: 15px;
         }
 
-        .intro-panel-item {
-            margin-bottom: 6px;
-            padding-left: 5px;
+        .intro-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #FAFAFA;
+            border: 1px solid #F0F0F0;
+            transition: transform 0.15s ease;
         }
+
+        .intro-card:active { transform: scale(0.98); }
+
+        .intro-card-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .intro-card-text {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .intro-card-text .highlight-score { color: #FF6D00; font-weight: bold; }
+        .intro-card-text .highlight-heart { color: #EF5350; font-weight: bold; }
+        .intro-card-text .highlight-hint { color: #AB47BC; font-weight: bold; }
+        .intro-card-text .highlight-collect { color: #42A5F5; font-weight: bold; }
+        .intro-card-text .highlight-difficulty { color: #26A69A; font-weight: bold; }
 
         .grade-select {
             background: linear-gradient(135deg, #26C6DA, #00ACC1);
@@ -899,12 +927,27 @@
             </div>
             <div class="intro-panel" id="introPanel">
                 <div class="intro-panel-content">
-                    <p class="intro-panel-title">🎯 游戏玩法：</p>
-                    <p class="intro-panel-item">• 点击卡片翻开，配对英文单词和中文意思</p>
-                    <p class="intro-panel-item">• 配对成功得分，连续配对有连击奖励</p>
-                    <p class="intro-panel-item">• 配对错误扣一颗心，3颗心用完本局结束</p>
-                    <p class="intro-panel-item">• 卡住了可以用提示，收集单词到收藏本复习</p>
-                    <p class="intro-panel-item">• 选年级和配对数，自由选择学习难度</p>
+                    <p class="intro-panel-title">🎯 游戏玩法</p>
+                    <div class="intro-card">
+                        <span class="intro-card-icon">🃏</span>
+                        <span class="intro-card-text">点击卡片翻开，配对英文单词和中文意思</span>
+                    </div>
+                    <div class="intro-card">
+                        <span class="intro-card-icon">🔥</span>
+                        <span class="intro-card-text">配对成功<span class="highlight-score">得分</span>，连续配对有<span class="highlight-score">连击奖励</span></span>
+                    </div>
+                    <div class="intro-card">
+                        <span class="intro-card-icon">❤️</span>
+                        <span class="intro-card-text">配对错误扣一颗 ❤️，3 颗 ❤️ 用完本局结束</span>
+                    </div>
+                    <div class="intro-card">
+                        <span class="intro-card-icon">💡</span>
+                        <span class="intro-card-text">卡住了用<span class="highlight-hint">提示</span>，收集单词到<span class="highlight-collect">收藏本</span>复习</span>
+                    </div>
+                    <div class="intro-card">
+                        <span class="intro-card-icon">⚡</span>
+                        <span class="intro-card-text">选年级和配对数，<span class="highlight-difficulty">自由选择学习难度</span></span>
+                    </div>
                 </div>
             </div>
         </div>
