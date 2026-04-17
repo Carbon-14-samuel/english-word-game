@@ -49,10 +49,18 @@
 
         .header-row2 {
             display: flex;
-            justify-content: flex-end;
+            justify-content: center;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             flex-wrap: wrap;
+        }
+
+        .header-row2 .btn-game {
+            flex: 1 1 0;
+            min-width: 52px;
+            padding: 7px 4px;
+            font-size: 12px;
+            text-align: center;
         }
 
         .level-badge {
@@ -282,37 +290,86 @@
             transition: all 0.2s ease;
         }
 
-        .btn-downgrade { background: linear-gradient(135deg, #FF7043, #F4511E); box-shadow: 0 2px 6px rgba(255, 112, 67, 0.3); }
-        .btn-upgrade { background: linear-gradient(135deg, #66BB6A, #43A047); box-shadow: 0 2px 6px rgba(102, 187, 106, 0.3); }
+        .btn-game {
+            background: linear-gradient(135deg, #42A5F5, #1E88E5);
+            color: white;
+            border: none;
+            padding: 7px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(66, 165, 245, 0.3);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-game:hover { transform: scale(1.05); }
+        .btn-game:active { transform: scale(0.95); }
+
+        /* 等级按钮包装器（含下拉菜单） */
+        .level-btn-wrapper {
+            position: relative;
+        }
+
+        .btn-level-toggle {
+            background: linear-gradient(135deg, #78909C, #546E7A);
+        }
+
+        .level-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            overflow: hidden;
+            z-index: 100;
+            min-width: 100%;
+        }
+
+        .level-dropdown.show {
+            display: block;
+        }
+
+        .level-dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 10px 16px;
+            border: none;
+            background: none;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.2s;
+            color: #333;
+        }
+
+        .level-dropdown-item:first-child {
+            color: #43A047;
+        }
+
+        .level-dropdown-item:last-child {
+            color: #F4511E;
+        }
+
+        .level-dropdown-item:hover {
+            background: #f5f5f5;
+        }
+
+        .level-dropdown-item:active {
+            background: #e0e0e0;
+        }
+
         .btn-collection { background: linear-gradient(135deg, #AB47BC, #8E24AA); box-shadow: 0 2px 6px rgba(171, 71, 188, 0.3); }
         .btn-achievements { background: linear-gradient(135deg, #FFA726, #FF9800); box-shadow: 0 2px 6px rgba(255, 167, 38, 0.3); }
-        .btn-parent { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3); color: white; border: none; padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: transform 0.2s; }
-        .btn-download { background: linear-gradient(135deg, #42A5F5, #1E88E5); box-shadow: 0 2px 6px rgba(66, 165, 245, 0.3); color: white; border: none; padding: 6px 12px; border-radius: 15px; font-size: 13px; cursor: pointer; transition: all 0.2s ease; }
-        .btn-download:hover { transform: scale(1.05); }
-        .btn-download:active { transform: scale(0.95); }
-        .btn-download:disabled { background: #BDBDBD; cursor: not-allowed; transform: none; }
-
-        .btn-downgrade:hover,
-        .btn-upgrade:hover,
-        .btn-hint:hover,
-        .btn-collection:hover,
-        .btn-achievements:hover {
-            transform: scale(1.05);
-        }
-
-        .btn-downgrade:active,
-        .btn-upgrade:active,
-        .btn-hint:active,
-        .btn-collection:active,
-        .btn-achievements:active {
-            transform: scale(0.95);
-        }
-
-        .btn-hint:disabled {
-            background: #BDBDBD;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
+        .btn-parent { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3); }
+        .btn-download { background: linear-gradient(135deg, #42A5F5, #1E88E5); box-shadow: 0 2px 6px rgba(66, 165, 245, 0.3); }
+        .btn-hint { background: linear-gradient(135deg, #66BB6A, #43A047); box-shadow: 0 2px 6px rgba(102, 187, 106, 0.3); }
+        .btn-hint:disabled { background: #BDBDBD; cursor: not-allowed; box-shadow: none; transform: none; }
 
         .combo-display {
             position: fixed;
@@ -670,6 +727,18 @@
         @media (max-width: 360px) {
             .cell { min-height: 55px; }
             .grid { gap: 6px; }
+            .header-row2 .btn-game { font-size: 11px; padding: 6px 3px; min-width: 46px; }
+        }
+
+        @media (max-width: 400px) {
+            .header-row2 {
+                gap: 3px;
+            }
+            .header-row2 .btn-game {
+                padding: 6px 3px;
+                font-size: 11px;
+                min-width: 48px;
+            }
         }
 
         /* ===== gameOver 自定义弹窗 ===== */
@@ -864,16 +933,20 @@
                     <span class="heart">❤</span>
                 </div>
                 <div class="score-display">分数: <span class="score-value" id="score">0</span></div>
-                <div class="grade-badge" id="gradeBadge">一年级</div>
             </div>
             <div class="header-row2">
-                <button class="btn-collection" onclick="showCollection()">📖 收藏本</button>
-                <button class="btn-achievements" onclick="showAchievements()">🏆 成就</button>
-                <button class="btn-parent" onclick="showParentDashboard()">👨‍👩‍👧 家长看板</button>
-                <button class="btn-download" id="downloadBtn" onclick="downloadAudio()">📥 下载音频</button>
-                <button class="btn-hint" id="hintBtn" onclick="useHint()">💡 提示</button>
-                <button class="btn-upgrade" onclick="upgradeLevel()">↑ 升级</button>
-                <button class="btn-downgrade" onclick="downgradeLevel()">↓ 降级</button>
+                <button class="btn-game" onclick="showCollection()">📖 收藏</button>
+                <button class="btn-game" onclick="showAchievements()">🏆 成就</button>
+                <button class="btn-game" onclick="showParentDashboard()">👨‍👩‍👧 家长</button>
+                <button class="btn-game btn-download" id="downloadBtn" onclick="downloadAudio()">📥 音频</button>
+                <button class="btn-game btn-hint" id="hintBtn" onclick="useHint()">💡 提示</button>
+                <div class="level-btn-wrapper">
+                    <button class="btn-game btn-level-toggle" onclick="toggleLevelMenu()">📊 等级</button>
+                    <div class="level-dropdown" id="levelDropdown">
+                        <button class="level-dropdown-item" onclick="upgradeLevel()">↑ 升级</button>
+                        <button class="level-dropdown-item" onclick="downgradeLevel()">↓ 降级</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1396,6 +1469,31 @@
                 overlay.classList.add('show');
             }
         }
+
+        function toggleLevelMenu() {
+            const dropdown = document.getElementById('levelDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // 点击页面其他地方关闭等级下拉菜单
+        document.addEventListener('click', (e) => {
+            const wrapper = document.querySelector('.level-btn-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                document.getElementById('levelDropdown').classList.remove('show');
+            }
+        });
+
+        // 升降级函数中关闭下拉菜单
+        const _origUpgrade = upgradeLevel;
+        const _origDowngrade = downgradeLevel;
+        upgradeLevel = function() {
+            document.getElementById('levelDropdown').classList.remove('show');
+            _origUpgrade();
+        };
+        downgradeLevel = function() {
+            document.getElementById('levelDropdown').classList.remove('show');
+            _origDowngrade();
+        };
         
         // 页面加载完成后自动显示游戏
         window.addEventListener('load', () => {
@@ -1651,15 +1749,15 @@
             return word.toLowerCase().replace(/\s+/g, '_') + '.mp3';
         }
         
-        // 获取音频完整路径（本地或CDN）
+        // 获取音频完整路径（统一走CDN，file:// 协议在手机上不可靠）
         function getAudioPath(grade, filename) {
             // 检测是否在GitHub Pages环境
             const isGitHubPages = window.location.hostname.includes('github.io');
             if (isGitHubPages) {
                 return `https://cdn.jsdelivr.net/gh/Carbon-14-samuel/english-word-game@main/audio/grade${grade}/${filename}`;
             }
-            // 本地文件：HTML 在 腾讯小龙虾/ 下，音频在 腾讯小龙虾/english-word-game/audio/ 下
-            return `english-word-game/audio/grade${grade}/${filename}`;
+            // 本地也走CDN（手机 file:// 协议不支持相对路径加载音频）
+            return `https://cdn.jsdelivr.net/gh/Carbon-14-samuel/english-word-game@main/audio/grade${grade}/${filename}`;
         }
         
         // 预加载当前游戏用到的单词音频（只加载当前格子里的单词）
@@ -2347,7 +2445,6 @@
         function updateUI() {
             document.getElementById('score').textContent = score;
             document.getElementById('level').textContent = level;
-            document.getElementById('gradeBadge').textContent = gradeNames[currentGrade];
             document.getElementById('gradeSelect').value = currentGrade;
             document.getElementById('pairsSelect').value = currentPairs;
 
