@@ -1266,68 +1266,51 @@
             
             btn.style.display = 'none';
             status.style.display = 'block';
-            status.textContent = '正在加载音频资源...';
+            status.textContent = '正在准备游戏...';
             
-            // 预加载当前年级的所有音频
-            const grade = getGradeForLevel(level);
-            await preloadAllGradeAudio(grade);
-            
-            // 隐藏预加载界面，显示游戏
+            // 先显示游戏界面（不阻塞）
             document.getElementById('preloadModal').classList.remove('show');
             document.getElementById('gameContainer').style.display = 'block';
             
-            // 初始化游戏
+            // 初始化游戏（这会确定当前需要哪些单词）
             initGame();
+            
+            // 后台预加载当前关卡需要的音频（不阻塞游戏）
+            preloadCurrentLevelAudio();
         }
         
-        // 预加载整个年级的所有音频
-        async function preloadAllGradeAudio(grade) {
-            const gradeWords = wordLibrary[`grade${grade + 1}`];
-            if (!gradeWords) return;
+        // 预加载当前关卡需要的音频（后台非阻塞）
+        function preloadCurrentLevelAudio() {
+            if (!grid || grid.length === 0) return;
             
-            console.log(`[Preload] Loading ${gradeWords.length} audio files for grade ${grade + 1}`);
-            
-            const promises = gradeWords.map(item => {
-                return new Promise((resolve) => {
-                    const word = item.en;
-                    if (audioCache[word]) {
-                        resolve();
-                        return;
-                    }
-                    
-                    const gradeNum = grade + 1;
-                    const filename = getAudioFilename(word);
-                    const audioPath = getAudioPath(gradeNum, filename);
-                    
-                    const audio = new Audio(audioPath);
-                    audio.preload = 'auto';
-                    
-                    audio.addEventListener('canplaythrough', () => {
-                        audioCache[word] = audio;
-                        resolve();
-                    }, { once: true });
-                    
-                    audio.addEventListener('error', () => {
-                        // 加载失败也继续
-                        resolve();
-                    }, { once: true });
-                    
-                    // 超时继续
-                    setTimeout(() => resolve(), 2000);
-                    
-                    audio.load();
-                });
+            // 提取当前关卡所有单词
+            const currentWords = new Set();
+            grid.forEach(cell => {
+                if (cell && cell.word) {
+                    currentWords.add(cell.word);
+                }
             });
             
-            // 分批加载，避免同时请求过多
-            const batchSize = 20;
-            for (let i = 0; i < promises.length; i += batchSize) {
-                const batch = promises.slice(i, i + batchSize);
-                await Promise.all(batch);
-                console.log(`[Preload] ${Math.min(i + batchSize, promises.length)}/${promises.length}`);
-            }
+            console.log(`[Preload] Loading ${currentWords.size} audio files for current level`);
             
-            console.log('[Preload] Complete');
+            const grade = getGradeForLevel(level);
+            const gradeNum = grade + 1;
+            
+            currentWords.forEach(word => {
+                if (audioCache[word]) return;
+                
+                const filename = getAudioFilename(word);
+                const audioPath = getAudioPath(gradeNum, filename);
+                
+                const audio = new Audio(audioPath);
+                audio.preload = 'auto';
+                
+                audio.addEventListener('canplaythrough', () => {
+                    audioCache[word] = audio;
+                }, { once: true });
+                
+                audio.load();
+            });
         }
         
         function initGame() {
