@@ -121,13 +121,48 @@
             transform: rotate(180deg);
         }
 
-        /* 游戏介绍内容面板 */
+        /* 游戏介绍浮层 */
+        .intro-wrapper {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
         .intro-panel {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 100;
             background: white;
             border-radius: 15px;
             padding: 15px 20px;
-            margin-bottom: 12px;
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            animation: introSlideDown 0.2s ease;
+        }
+
+        .intro-panel.show {
+            display: block;
+        }
+
+        @keyframes introSlideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 遮罩层 */
+        .intro-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 99;
+        }
+
+        .intro-overlay.show {
+            display: block;
         }
 
         .intro-panel-content {
@@ -786,23 +821,24 @@
 
 
     <div class="game-container" id="gameContainer" style="display: none;">
-        <!-- 游戏介绍标题栏 -->
-        <div class="intro-header-bar" id="introHeaderBar" onclick="toggleIntro()">
-            <span class="intro-icon">📖</span>
-            <span class="intro-title-text">游戏介绍</span>
-            <span class="intro-arrow" id="introArrow">▼</span>
-        </div>
-        
-        <!-- 游戏介绍内容面板 -->
-        <div class="intro-panel" id="introPanel" style="display: none;">
-            <div class="intro-panel-content">
-                <p class="intro-panel-title">🎯 游戏玩法：</p>
-                <p class="intro-panel-item">• 点击卡片翻开，匹配英文单词和中文意思</p>
-                <p class="intro-panel-item">• 配对成功获得分数，连续配对有连击奖励</p>
-                <p class="intro-panel-item">• 完成关卡升级，解锁更高年级词汇</p>
-                <p class="intro-panel-item">• 收集单词到收藏本，随时复习巩固</p>
+        <!-- 游戏介绍浮层 -->
+        <div class="intro-wrapper" id="introWrapper">
+            <div class="intro-header-bar" id="introHeaderBar" onclick="toggleIntro()">
+                <span class="intro-icon">📖</span>
+                <span class="intro-title-text">游戏介绍</span>
+                <span class="intro-arrow" id="introArrow">▼</span>
+            </div>
+            <div class="intro-panel" id="introPanel">
+                <div class="intro-panel-content">
+                    <p class="intro-panel-title">🎯 游戏玩法：</p>
+                    <p class="intro-panel-item">• 点击卡片翻开，匹配英文单词和中文意思</p>
+                    <p class="intro-panel-item">• 配对成功获得分数，连续配对有连击奖励</p>
+                    <p class="intro-panel-item">• 完成关卡升级，解锁更高年级词汇</p>
+                    <p class="intro-panel-item">• 收集单词到收藏本，随时复习巩固</p>
+                </div>
             </div>
         </div>
+        <div class="intro-overlay" id="introOverlay" onclick="toggleIntro()"></div>
 
         <div class="header">
             <div class="header-row1">
@@ -1342,19 +1378,22 @@
             return { pairs: 12, cols: 5 };
         }
 
-        // 展开/切换介绍面板
+        // 展开/切换介绍面板（浮层模式）
         function toggleIntro() {
             const panel = document.getElementById('introPanel');
             const header = document.getElementById('introHeaderBar');
             const arrow = document.getElementById('introArrow');
-            if (panel.style.display === 'none') {
-                panel.style.display = 'block';
-                header.classList.add('expanded');
-                arrow.textContent = '▲';
-            } else {
-                panel.style.display = 'none';
+            const overlay = document.getElementById('introOverlay');
+            if (panel.classList.contains('show')) {
+                panel.classList.remove('show');
                 header.classList.remove('expanded');
                 arrow.textContent = '▼';
+                overlay.classList.remove('show');
+            } else {
+                panel.classList.add('show');
+                header.classList.add('expanded');
+                arrow.textContent = '▲';
+                overlay.classList.add('show');
             }
         }
         
