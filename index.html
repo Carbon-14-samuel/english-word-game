@@ -730,27 +730,7 @@
     </style>
 </head>
 <body>
-    <!-- 游戏介绍面板（默认展开） -->
-    <div id="introPanel" style="background: white; border-radius: 15px; padding: 20px; margin: 10px auto; max-width: 480px; box-shadow: 0 3px 12px rgba(0,0,0,0.1);">
-        <div id="introContent">
-            <div style="text-align: center; margin-bottom: 15px;">
-                <div style="font-size: 40px; margin-bottom: 5px;">🎮</div>
-                <h2 style="color: #2E7D32; font-size: 20px;">小学英语单词配对</h2>
-            </div>
-            <div style="text-align: left; background: #f8f8f8; border-radius: 10px; padding: 15px; margin-bottom: 15px; font-size: 13px; color: #555; line-height: 1.6;">
-                <p style="margin-bottom: 8px;"><strong>🎯 游戏玩法：</strong></p>
-                <p style="margin-bottom: 5px; padding-left: 8px;">• 点击卡片翻开，匹配英文单词和中文意思</p>
-                <p style="margin-bottom: 5px; padding-left: 8px;">• 配对成功获得分数，连续配对有连击奖励</p>
-                <p style="margin-bottom: 5px; padding-left: 8px;">• 完成关卡升级，解锁更高年级词汇</p>
-                <p style="padding-left: 8px;">• 收集单词到收藏本，随时复习巩固</p>
-            </div>
-            <div style="text-align: center;">
-                <button onclick="collapseIntro()" style="background: linear-gradient(135deg, #66BB6A, #43A047); color: white; border: none; padding: 12px 40px; border-radius: 20px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 10px rgba(102, 187, 106, 0.4);">
-                    知道了，开始玩！
-                </button>
-            </div>
-        </div>
-    </div>
+
 
     <div class="game-container" id="gameContainer" style="display: none;">
         <div class="header">
@@ -788,6 +768,17 @@
                 <button class="btn-hint" id="hintBtn" onclick="useHint()">💡 提示</button>
                 <button class="btn-upgrade" onclick="upgradeLevel()">↑ 升级</button>
                 <button class="btn-downgrade" onclick="downgradeLevel()">↓ 降级</button>
+            </div>
+        </div>
+
+        <!-- 游戏介绍下拉面板 -->
+        <div id="introDropdown" class="intro-dropdown" style="display: block;">
+            <div style="text-align: left; background: #f8f8f8; border-radius: 10px; padding: 15px; margin: 10px 0; font-size: 13px; color: #555; line-height: 1.6;">
+                <p style="margin-bottom: 8px;"><strong>🎯 游戏玩法：</strong></p>
+                <p style="margin-bottom: 5px; padding-left: 8px;">• 点击卡片翻开，匹配英文单词和中文意思</p>
+                <p style="margin-bottom: 5px; padding-left: 8px;">• 配对成功获得分数，连续配对有连击奖励</p>
+                <p style="margin-bottom: 5px; padding-left: 8px;">• 完成关卡升级，解锁更高年级词汇</p>
+                <p style="padding-left: 8px;">• 收集单词到收藏本，随时复习巩固</p>
             </div>
         </div>
 
@@ -1287,21 +1278,16 @@
             return { pairs: 12, cols: 5 };
         }
 
-        // 收起介绍面板
-        function collapseIntro() {
-            markUserInteracted();
-            initAudio();
-            
-            document.getElementById('introPanel').style.display = 'none';
-        }
-        
         // 展开/切换介绍面板
         function toggleIntro() {
-            const panel = document.getElementById('introPanel');
-            if (panel.style.display === 'none') {
-                panel.style.display = 'block';
+            const dropdown = document.getElementById('introDropdown');
+            const btn = document.getElementById('introToggleBtn');
+            if (dropdown.style.display === 'none') {
+                dropdown.style.display = 'block';
+                btn.textContent = '📖 游戏介绍';
             } else {
-                panel.style.display = 'none';
+                dropdown.style.display = 'none';
+                btn.textContent = '📖 游戏介绍';
             }
         }
         
