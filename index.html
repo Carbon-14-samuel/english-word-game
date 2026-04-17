@@ -1256,11 +1256,11 @@
             roundStartTime = Date.now();
 
             matchedCount = 0;
-            createGrid();
+            const shuffledPairs = createGrid();
             updateUI();
             
-            // 预加载当前年级的音频（异步，不阻塞游戏）
-            preloadGradeAudio(currentGrade);
+            // 预加载当前游戏用到的单词音频
+            preloadGameAudio(shuffledPairs);
         }
 
         function createGrid() {
@@ -1310,6 +1310,9 @@
             });
 
             matchedCount = 0;
+            
+            // 返回当前使用的单词对，用于预加载音频
+            return shuffledPairs;
         }
 
         function createCell(index, cellData) {
@@ -1420,31 +1423,29 @@
             return `audio/grade${grade}/${filename}`;
         }
         
-        // 预加载当前年级的音频
-        async function preloadGradeAudio(grade) {
-            const gradeWords = vocabulary[grade];
-            if (!gradeWords) return;
+        // 预加载当前游戏用到的单词音频（只加载当前格子里的单词）
+        function preloadGameAudio(shuffledPairs) {
+            const grade = currentGrade + 1;
             
-            console.log(`[Audio] Preloading grade ${grade} audio...`);
+            console.log('[Audio] Preloading game audio for', shuffledPairs.length, 'pairs');
             
-            for (const item of gradeWords) {
-                const word = item.en;
-                const filename = getAudioFilename(word);
-                const audioPath = getAudioPath(grade, filename);
-                
+            shuffledPairs.forEach(pair => {
+                const word = pair.en;
                 if (!audioCache[word]) {
+                    const filename = getAudioFilename(word);
+                    const audioPath = getAudioPath(grade, filename);
                     const audio = new Audio(audioPath);
                     audio.preload = 'auto';
+                    // 尝试加载，但不阻塞
+                    audio.load();
                     audioCache[word] = audio;
                 }
-            }
-            
-            console.log(`[Audio] Grade ${grade} audio preloaded`);
+            });
         }
         
         // 播放单词音频（优先预录音频，降级到TTS）
         function speakWord(word) {
-            console.log('[Audio] speakWord called:', word, 'Mobile:', isMobile());
+            console.log('[Audio] speakWord called:', word);
             
             // 先停止当前播放的音频
             if (currentAudio) {
@@ -1455,22 +1456,24 @@
             // 尝试使用缓存的预录音频
             const cachedAudio = audioCache[word];
             if (cachedAudio) {
-                currentAudio = cachedAudio;
-                currentAudio.currentTime = 0;
-                const playPromise = currentAudio.play();
-                if (playPromise) {
-                    playPromise.catch(e => {
-                        console.warn('[Audio] Cached audio failed:', e);
-                        // 预录音频失败，降级到TTS
+                // 检查音频是否已准备好播放
+                if (cachedAudio.readyState >= 3) { // HAVE_FUTURE_DATA or HAVE_ENOUGH_DATA
+                    playCachedAudio(cachedAudio, word);
+                } else {
+                    // 等待音频加载完成
+                    cachedAudio.addEventListener('canplaythrough', () => {
+                        playCachedAudio(cachedAudio, word);
+                    }, { once: true });
+                    // 同时设置超时，避免无限等待
+                    setTimeout(() => {
                         speakWithTTS(word);
-                    });
+                    }, 500);
                 }
-                console.log('[Audio] Playing cached:', word);
                 return;
             }
             
             // 没有缓存，尝试动态加载预录音频
-            const grade = currentGrade + 1; // currentGrade是0-based，grade是1-based
+            const grade = currentGrade + 1;
             const filename = getAudioFilename(word);
             const audioPath = getAudioPath(grade, filename);
             
@@ -1478,15 +1481,46 @@
             audioCache[word] = audio;
             currentAudio = audio;
             
+            // 等待音频加载完成再播放
+            audio.addEventListener('canplaythrough', () => {
+                const playPromise = audio.play();
+                if (playPromise) {
+                    playPromise.catch(e => {
+                        console.warn('[Audio] Dynamic play failed:', e);
+                        speakWithTTS(word);
+                    });
+                }
+            }, { once: true });
+            
+            // 加载失败时降级到TTS
+            audio.addEventListener('error', () => {
+                console.warn('[Audio] Load error, fallback to TTS:', word);
+                speakWithTTS(word);
+            }, { once: true });
+            
+            // 超时降级
+            setTimeout(() => {
+                if (audio.readyState < 3) {
+                    console.warn('[Audio] Load timeout, fallback to TTS:', word);
+                    speakWithTTS(word);
+                }
+            }, 1000);
+            
+            console.log('[Audio] Loading dynamic:', word);
+        }
+        
+        // 播放缓存的音频
+        function playCachedAudio(audio, word) {
+            currentAudio = audio;
+            audio.currentTime = 0;
             const playPromise = audio.play();
             if (playPromise) {
                 playPromise.catch(e => {
-                    console.warn('[Audio] Dynamic load failed:', e);
-                    // 动态加载失败，降级到TTS
+                    console.warn('[Audio] Cached play failed:', e);
                     speakWithTTS(word);
                 });
             }
-            console.log('[Audio] Playing dynamic:', word);
+            console.log('[Audio] Playing cached:', word);
         }
         
         // Web Speech API 降级方案
