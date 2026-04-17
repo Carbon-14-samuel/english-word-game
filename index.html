@@ -710,7 +710,7 @@
     </style>
 </head>
 <body>
-    <!-- 游戏介绍折叠面板 -->
+    <!-- 游戏介绍面板（默认展开） -->
     <div id="introPanel" style="background: white; border-radius: 15px; padding: 20px; margin: 10px auto; max-width: 480px; box-shadow: 0 3px 12px rgba(0,0,0,0.1);">
         <div id="introContent">
             <div style="text-align: center; margin-bottom: 15px;">
@@ -730,17 +730,11 @@
                 </button>
             </div>
         </div>
-        <div id="introCollapsed" style="display: none; text-align: center;">
-            <button onclick="expandIntro()" style="background: none; border: none; color: #666; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; padding: 5px;">
-                <span>📖 游戏介绍</span>
-                <span style="font-size: 10px;">▼</span>
-            </button>
-        </div>
     </div>
 
     <div class="game-container" id="gameContainer" style="display: none;">
         <div class="header">
-            <div class="grade-badge" id="gradeDisplay">一年级</div>
+            <div class="grade-badge" id="gradeDisplay" onclick="toggleIntro()" style="cursor: pointer; background: linear-gradient(135deg, #42A5F5, #1E88E5);">📖 游戏介绍</div>
             <div class="header-row1">
                 <select class="grade-select" id="gradeSelect" onchange="changeGrade(this.value)">
                     <option value="0">一年级</option>
@@ -1278,14 +1272,17 @@
             markUserInteracted();
             initAudio();
             
-            document.getElementById('introContent').style.display = 'none';
-            document.getElementById('introCollapsed').style.display = 'block';
+            document.getElementById('introPanel').style.display = 'none';
         }
         
-        // 展开介绍面板
-        function expandIntro() {
-            document.getElementById('introContent').style.display = 'block';
-            document.getElementById('introCollapsed').style.display = 'none';
+        // 展开/切换介绍面板
+        function toggleIntro() {
+            const panel = document.getElementById('introPanel');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
+            }
         }
         
         // 页面加载完成后自动显示游戏
