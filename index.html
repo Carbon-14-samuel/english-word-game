@@ -1442,23 +1442,9 @@
             console.log(`[Audio] Grade ${grade} audio preloaded`);
         }
         
-        // 播放单词音频（优先本地，降级到TTS）
+        // 播放单词音频（优先预录音频，降级到TTS）
         function speakWord(word) {
-            console.log('[Audio] speakWord called:', word, 'UserInteracted:', ttsUserInteracted);
-            
-            // 移动端直接使用TTS，避免音频加载问题
-            if (isMobile()) {
-                console.log('[Audio] Mobile detected, using TTS directly:', word);
-                // 移动端：确保交互标记后立即播放，使用微任务确保状态更新
-                if (ttsUserInteracted) {
-                    speakWithTTS(word);
-                } else {
-                    // 如果还没标记，先标记然后延迟播放
-                    markUserInteracted();
-                    setTimeout(() => speakWithTTS(word), 50);
-                }
-                return;
-            }
+            console.log('[Audio] speakWord called:', word, 'Mobile:', isMobile());
             
             // 先停止当前播放的音频
             if (currentAudio) {
@@ -1466,7 +1452,7 @@
                 currentAudio.currentTime = 0;
             }
             
-            // 尝试使用本地音频
+            // 尝试使用缓存的预录音频
             const cachedAudio = audioCache[word];
             if (cachedAudio) {
                 currentAudio = cachedAudio;
@@ -1474,16 +1460,16 @@
                 const playPromise = currentAudio.play();
                 if (playPromise) {
                     playPromise.catch(e => {
-                        console.warn('[Audio] Local audio failed:', e);
-                        // 本地音频失败，降级到TTS
+                        console.warn('[Audio] Cached audio failed:', e);
+                        // 预录音频失败，降级到TTS
                         speakWithTTS(word);
                     });
                 }
-                console.log('[Audio] Playing local:', word);
+                console.log('[Audio] Playing cached:', word);
                 return;
             }
             
-            // 本地没有，尝试动态加载
+            // 没有缓存，尝试动态加载预录音频
             const grade = currentGrade + 1; // currentGrade是0-based，grade是1-based
             const filename = getAudioFilename(word);
             const audioPath = getAudioPath(grade, filename);
@@ -1603,16 +1589,9 @@
             const cellElement = document.querySelector(`.cell[data-index="${index}"]`);
             const cell = grid[index];
 
-            // 点击英文卡片时播放发音（移动端延迟一点确保交互标记完成）
+            // 点击英文卡片时播放发音
             if (cell && cell.type === 'en') {
-                if (isMobile()) {
-                    // 移动端：确保交互标记后播放
-                    requestAnimationFrame(() => {
-                        speakWord(cell.text);
-                    });
-                } else {
-                    speakWord(cell.text);
-                }
+                speakWord(cell.text);
             }
 
             if (selectedCell === index) {
