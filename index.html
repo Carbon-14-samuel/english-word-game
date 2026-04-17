@@ -179,6 +179,10 @@
         .btn-collection { background: linear-gradient(135deg, #AB47BC, #8E24AA); box-shadow: 0 2px 6px rgba(171, 71, 188, 0.3); }
         .btn-achievements { background: linear-gradient(135deg, #FFA726, #FF9800); box-shadow: 0 2px 6px rgba(255, 167, 38, 0.3); }
         .btn-parent { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3); color: white; border: none; padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: transform 0.2s; }
+        .btn-download { background: linear-gradient(135deg, #42A5F5, #1E88E5); box-shadow: 0 2px 6px rgba(66, 165, 245, 0.3); color: white; border: none; padding: 6px 12px; border-radius: 15px; font-size: 13px; cursor: pointer; transition: all 0.2s ease; }
+        .btn-download:hover { transform: scale(1.05); }
+        .btn-download:active { transform: scale(0.95); }
+        .btn-download:disabled { background: #BDBDBD; cursor: not-allowed; transform: none; }
 
         .btn-downgrade:hover,
         .btn-upgrade:hover,
@@ -720,26 +724,9 @@
                 <p style="padding-left: 10px;">• 收集单词到收藏本，随时复习巩固</p>
             </div>
             
-            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                <button onclick="startGameDirectly()" style="background: linear-gradient(135deg, #66BB6A, #43A047); color: white; border: none; padding: 14px 28px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 187, 106, 0.4); transition: all 0.3s; flex: 1; min-width: 120px;">
-                    🚀 直接开始
-                </button>
-                <button onclick="startWithAudioDownload()" style="background: linear-gradient(135deg, #42A5F5, #1E88E5); color: white; border: none; padding: 14px 28px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(66, 165, 245, 0.4); transition: all 0.3s; flex: 1; min-width: 120px;">
-                    📥 下载音频
-                </button>
-            </div>
-            
-            <div id="downloadStatus" style="margin-top: 15px; color: #666; font-size: 12px; display: none;">
-                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <span class="loading-spinner" style="display: inline-block; width: 16px; height: 16px; border: 2px solid #ddd; border-top-color: #42A5F5; border-radius: 50%; animation: spin 1s linear infinite;"></span>
-                    <span id="downloadText">正在下载音频...</span>
-                </div>
-                <div id="downloadProgress" style="margin-top: 8px; font-size: 11px; color: #888;"></div>
-            </div>
-            
-            <p style="margin-top: 15px; font-size: 11px; color: #999;">
-                💡 提示：下载音频后发音更流畅，不下载则使用在线语音
-            </p>
+            <button onclick="startGameDirectly()" style="background: linear-gradient(135deg, #66BB6A, #43A047); color: white; border: none; padding: 16px 50px; border-radius: 25px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 187, 106, 0.4); transition: all 0.3s;">
+                🚀 开始游戏
+            </button>
         </div>
     </div>
     <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
@@ -776,6 +763,7 @@
                 <button class="btn-collection" onclick="showCollection()">📖 收藏本</button>
                 <button class="btn-achievements" onclick="showAchievements()">🏆 成就</button>
                 <button class="btn-parent" onclick="showParentDashboard()">👨‍👩‍👧 家长看板</button>
+                <button class="btn-download" id="downloadBtn" onclick="downloadAudio()">📥 下载音频</button>
                 <button class="btn-hint" id="hintBtn" onclick="useHint()">💡 提示</button>
                 <button class="btn-upgrade" onclick="upgradeLevel()">↑ 升级</button>
                 <button class="btn-downgrade" onclick="downgradeLevel()">↓ 降级</button>
@@ -1278,7 +1266,7 @@
             return { pairs: 12, cols: 5 };
         }
 
-        // 直接开始游戏（不下载音频）
+        // 直接开始游戏
         function startGameDirectly() {
             markUserInteracted();
             initAudio();
@@ -1289,48 +1277,31 @@
             initGame();
         }
         
-        // 下载音频后开始游戏
-        async function startWithAudioDownload() {
-            markUserInteracted();
-            initAudio();
+        // 下载当前年级的音频
+        async function downloadAudio() {
+            const btn = document.getElementById('downloadBtn');
+            const originalText = btn.textContent;
             
-            const downloadStatus = document.getElementById('downloadStatus');
-            const downloadText = document.getElementById('downloadText');
-            const downloadProgress = document.getElementById('downloadProgress');
+            btn.disabled = true;
+            btn.textContent = '⏳ 下载中...';
             
-            downloadStatus.style.display = 'block';
-            downloadText.textContent = '正在下载音频...';
-            
-            // 下载当前年级的所有音频
             const grade = getGradeForLevel(level);
-            const downloaded = await downloadGradeAudio(grade, (current, total) => {
-                downloadProgress.textContent = `${current}/${total}`;
-            });
-            
-            downloadText.textContent = `下载完成！${downloaded} 个音频已缓存`;
-            
-            setTimeout(() => {
-                document.getElementById('startModal').classList.remove('show');
-                document.getElementById('gameContainer').style.display = 'block';
-                initGame();
-            }, 800);
-        }
-        
-        // 下载整个年级的音频（带进度回调）
-        async function downloadGradeAudio(grade, onProgress) {
             const gradeWords = wordLibrary[`grade${grade + 1}`];
-            if (!gradeWords) return 0;
+            if (!gradeWords) {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                return;
+            }
             
             const gradeNum = grade + 1;
             let downloaded = 0;
             const total = gradeWords.length;
             
-            const promises = gradeWords.map((item, index) => {
+            const promises = gradeWords.map((item) => {
                 return new Promise((resolve) => {
                     const word = item.en;
                     if (audioCache[word]) {
                         downloaded++;
-                        if (onProgress) onProgress(downloaded, total);
                         resolve();
                         return;
                     }
@@ -1344,21 +1315,16 @@
                     audio.addEventListener('canplaythrough', () => {
                         audioCache[word] = audio;
                         downloaded++;
-                        if (onProgress) onProgress(downloaded, total);
                         resolve();
                     }, { once: true });
                     
                     audio.addEventListener('error', () => {
-                        // 下载失败也继续
                         downloaded++;
-                        if (onProgress) onProgress(downloaded, total);
                         resolve();
                     }, { once: true });
                     
-                    // 超时继续（3秒）
                     setTimeout(() => {
                         downloaded++;
-                        if (onProgress) onProgress(downloaded, total);
                         resolve();
                     }, 3000);
                     
@@ -1366,14 +1332,19 @@
                 });
             });
             
-            // 分批下载，避免同时请求过多
+            // 分批下载
             const batchSize = 15;
             for (let i = 0; i < promises.length; i += batchSize) {
                 const batch = promises.slice(i, i + batchSize);
                 await Promise.all(batch);
+                btn.textContent = `⏳ ${Math.round((downloaded / total) * 100)}%`;
             }
             
-            return downloaded;
+            btn.textContent = `✅ 已下载`;
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }, 2000);
         }
         
         function initGame() {
