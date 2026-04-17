@@ -706,7 +706,22 @@
     </style>
 </head>
 <body>
-    <div class="game-container">
+    <!-- 音频预加载界面 -->
+    <div id="preloadModal" class="modal show" style="z-index: 9999;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px;">
+            <div style="font-size: 48px; margin-bottom: 15px;">🎮</div>
+            <h2 style="color: #2E7D32; margin-bottom: 10px;">小学英语单词配对</h2>
+            <p style="color: #666; margin-bottom: 20px; font-size: 14px;">点击下方按钮开始游戏<br>首次加载需要几秒钟</p>
+            <button id="startGameBtn" onclick="startGameWithPreload()" style="background: linear-gradient(135deg, #66BB6A, #43A047); color: white; border: none; padding: 15px 40px; border-radius: 25px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 187, 106, 0.4); transition: all 0.3s;">
+                开始游戏
+            </button>
+            <div id="preloadStatus" style="margin-top: 15px; color: #888; font-size: 12px; display: none;">
+                正在加载音频资源...
+            </div>
+        </div>
+    </div>
+
+    <div class="game-container" id="gameContainer" style="display: none;">
         <div class="header">
             <div class="grade-badge" id="gradeDisplay">一年级</div>
             <div class="header-row1">
@@ -1240,6 +1255,81 @@
             return { pairs: 12, cols: 5 };
         }
 
+        // 用户点击开始游戏，预加载音频后进入
+        async function startGameWithPreload() {
+            // 标记用户已交互（解锁音频自动播放）
+            markUserInteracted();
+            initAudio();
+            
+            const btn = document.getElementById('startGameBtn');
+            const status = document.getElementById('preloadStatus');
+            
+            btn.style.display = 'none';
+            status.style.display = 'block';
+            status.textContent = '正在加载音频资源...';
+            
+            // 预加载当前年级的所有音频
+            const grade = getGradeForLevel(level);
+            await preloadAllGradeAudio(grade);
+            
+            // 隐藏预加载界面，显示游戏
+            document.getElementById('preloadModal').classList.remove('show');
+            document.getElementById('gameContainer').style.display = 'block';
+            
+            // 初始化游戏
+            initGame();
+        }
+        
+        // 预加载整个年级的所有音频
+        async function preloadAllGradeAudio(grade) {
+            const gradeWords = wordLibrary[`grade${grade + 1}`];
+            if (!gradeWords) return;
+            
+            console.log(`[Preload] Loading ${gradeWords.length} audio files for grade ${grade + 1}`);
+            
+            const promises = gradeWords.map(item => {
+                return new Promise((resolve) => {
+                    const word = item.en;
+                    if (audioCache[word]) {
+                        resolve();
+                        return;
+                    }
+                    
+                    const gradeNum = grade + 1;
+                    const filename = getAudioFilename(word);
+                    const audioPath = getAudioPath(gradeNum, filename);
+                    
+                    const audio = new Audio(audioPath);
+                    audio.preload = 'auto';
+                    
+                    audio.addEventListener('canplaythrough', () => {
+                        audioCache[word] = audio;
+                        resolve();
+                    }, { once: true });
+                    
+                    audio.addEventListener('error', () => {
+                        // 加载失败也继续
+                        resolve();
+                    }, { once: true });
+                    
+                    // 超时继续
+                    setTimeout(() => resolve(), 2000);
+                    
+                    audio.load();
+                });
+            });
+            
+            // 分批加载，避免同时请求过多
+            const batchSize = 20;
+            for (let i = 0; i < promises.length; i += batchSize) {
+                const batch = promises.slice(i, i + batchSize);
+                await Promise.all(batch);
+                console.log(`[Preload] ${Math.min(i + batchSize, promises.length)}/${promises.length}`);
+            }
+            
+            console.log('[Preload] Complete');
+        }
+        
         function initGame() {
             currentGrade = getGradeForLevel(level);
             // 只有在没有手动设置配对数时，才根据等级自动设置
@@ -1459,17 +1549,31 @@
                 // 检查音频是否已准备好播放
                 if (cachedAudio.readyState >= 3) { // HAVE_FUTURE_DATA or HAVE_ENOUGH_DATA
                     playCachedAudio(cachedAudio, word);
+                    return;
+                } else if (cachedAudio.error) {
+                    // 音频加载失败，直接使用TTS
+                    console.warn('[Audio] Cached audio has error, using TTS:', word);
+                    speakWithTTS(word);
+                    return;
                 } else {
                     // 等待音频加载完成
                     cachedAudio.addEventListener('canplaythrough', () => {
                         playCachedAudio(cachedAudio, word);
                     }, { once: true });
+                    // 加载失败时降级到TTS
+                    cachedAudio.addEventListener('error', () => {
+                        console.warn('[Audio] Cached audio load error, using TTS:', word);
+                        speakWithTTS(word);
+                    }, { once: true });
                     // 同时设置超时，避免无限等待
                     setTimeout(() => {
-                        speakWithTTS(word);
-                    }, 500);
+                        if (cachedAudio.readyState < 3 && !cachedAudio.error) {
+                            console.warn('[Audio] Cached audio timeout, using TTS:', word);
+                            speakWithTTS(word);
+                        }
+                    }, 300);
+                    return;
                 }
-                return;
             }
             
             // 没有缓存，尝试动态加载预录音频
@@ -1481,8 +1585,13 @@
             audioCache[word] = audio;
             currentAudio = audio;
             
+            // 标记是否已处理（避免重复播放）
+            let isHandled = false;
+            
             // 等待音频加载完成再播放
             audio.addEventListener('canplaythrough', () => {
+                if (isHandled) return;
+                isHandled = true;
                 const playPromise = audio.play();
                 if (playPromise) {
                     playPromise.catch(e => {
@@ -1490,23 +1599,26 @@
                         speakWithTTS(word);
                     });
                 }
+                console.log('[Audio] Playing dynamic:', word);
             }, { once: true });
             
             // 加载失败时降级到TTS
             audio.addEventListener('error', () => {
+                if (isHandled) return;
+                isHandled = true;
                 console.warn('[Audio] Load error, fallback to TTS:', word);
                 speakWithTTS(word);
             }, { once: true });
             
             // 超时降级
             setTimeout(() => {
+                if (isHandled) return;
                 if (audio.readyState < 3) {
+                    isHandled = true;
                     console.warn('[Audio] Load timeout, fallback to TTS:', word);
                     speakWithTTS(word);
                 }
-            }, 1000);
-            
-            console.log('[Audio] Loading dynamic:', word);
+            }, 500);
         }
         
         // 播放缓存的音频
