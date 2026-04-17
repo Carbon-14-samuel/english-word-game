@@ -422,6 +422,300 @@
             100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
         }
 
+        /* 角色行内进度条覆盖 */
+        .char-progress-row .progress-container {
+            margin-bottom: 0;
+            height: 24px;
+            background: #F5F5F5;
+        }
+
+        .char-progress-row .progress-bar {
+            background: linear-gradient(90deg, #FFD54F, #FFC107, #FFB300);
+        }
+
+        /* ===== 角色系统 ===== */
+        .char-progress-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+
+        .character-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        .character-wrapper.bounce {
+            animation: charBounce 0.5s ease;
+        }
+
+        .character-wrapper.sad {
+            animation: charSad 0.6s ease;
+        }
+
+        .character-wrapper.celebrate {
+            animation: charCelebrate 0.8s ease;
+        }
+
+        @keyframes charBounce {
+            0%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-15px); }
+            50% { transform: translateY(-8px); }
+            70% { transform: translateY(-12px); }
+        }
+
+        @keyframes charSad {
+            0%, 100% { transform: translateY(0); }
+            20% { transform: translateY(3px) rotate(-5deg); }
+            40% { transform: translateY(5px) rotate(3deg); }
+            60% { transform: translateY(3px) rotate(-3deg); }
+            80% { transform: translateY(4px) rotate(2deg); }
+        }
+
+        @keyframes charCelebrate {
+            0% { transform: translateY(0) scale(1); }
+            25% { transform: translateY(-18px) scale(1.1); }
+            50% { transform: translateY(-5px) scale(1.05); }
+            75% { transform: translateY(-12px) scale(1.08); }
+            100% { transform: translateY(0) scale(1); }
+        }
+
+        /* 角色头部 - 妈妈形象 */
+        .char-head {
+            width: 50px;
+            height: 50px;
+            background: #FFECD2;
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* 静音状态 - 嘴巴变成小横线 */
+        .character-wrapper.muted .char-mouth::before {
+            height: 0;
+            border-radius: 0;
+            width: 8px;
+            bottom: auto;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border-top: 2px solid #E88B8B;
+        }
+
+        /* 头发 - 深棕色长发 */
+        .char-hair {
+            position: absolute;
+            top: -3px;
+            left: -2px;
+            right: -2px;
+            height: 28px;
+            background: #4A3728;
+            border-radius: 50% 50% 0 0;
+            z-index: 3;
+        }
+
+        .char-hair::before {
+            content: '';
+            position: absolute;
+            top: 12px;
+            right: -6px;
+            width: 11px;
+            height: 22px;
+            background: #4A3728;
+            border-radius: 0 50% 50% 0;
+        }
+
+        .char-hair::after {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: -6px;
+            width: 11px;
+            height: 22px;
+            background: #4A3728;
+            border-radius: 50% 0 0 50%;
+        }
+
+        /* 眼睛 - 温柔大眼 */
+        .char-eyes {
+            position: absolute;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 4;
+        }
+
+        .char-eye {
+            width: 7px;
+            height: 8px;
+            background: #4A3728;
+            border-radius: 50%;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .char-eye::after {
+            content: '';
+            position: absolute;
+            top: 1px;
+            right: 1px;
+            width: 3px;
+            height: 3px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        /* 开心眼睛 */
+        .character-wrapper.happy .char-eye {
+            height: 4px;
+            border-radius: 4px 4px 0 0;
+            top: 2px;
+        }
+
+        .character-wrapper.happy .char-eye::after {
+            display: none;
+        }
+
+        /* 难过眼睛 */
+        .character-wrapper.sad .char-eye {
+            height: 6px;
+            width: 9px;
+        }
+
+        .character-wrapper.sad .char-eye::after {
+            top: -3px;
+            right: 50%;
+            transform: translateX(50%);
+            width: 7px;
+            height: 7px;
+            border-radius: 0;
+            background: transparent;
+            border-top: 2px solid #333;
+        }
+
+        /* 嘴巴 - 温柔微笑 */
+        .char-mouth {
+            position: absolute;
+            bottom: 11px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 5px;
+            z-index: 4;
+            transition: all 0.2s ease;
+        }
+
+        .char-mouth::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            border-radius: 0 0 5px 5px;
+            background: #E88B8B;
+        }
+
+        /* 开心嘴巴 - 更大笑容 */
+        .character-wrapper.happy .char-mouth {
+            width: 14px;
+            height: 7px;
+        }
+
+        .character-wrapper.happy .char-mouth::before {
+            height: 7px;
+            border-radius: 0 0 7px 7px;
+        }
+
+        /* 难过嘴巴 */
+        .character-wrapper.sad .char-mouth::before {
+            border-radius: 5px 5px 0 0;
+            bottom: auto;
+            top: 0;
+            height: 4px;
+            width: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* 腮红 */
+        .char-blush {
+            position: absolute;
+            top: 26px;
+            width: 8px;
+            height: 5px;
+            background: rgba(255, 138, 128, 0.4);
+            border-radius: 50%;
+            z-index: 4;
+        }
+
+        .char-blush-left { left: 5px; }
+        .char-blush-right { right: 5px; }
+
+        /* 气泡台词 */
+        .char-bubble {
+            position: absolute;
+            top: -8px;
+            left: 60px;
+            background: white;
+            border-radius: 14px;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: #555;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(-10px) scale(0.8);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .char-bubble.show {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+        }
+
+        .char-bubble::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 6px solid transparent;
+            border-right-color: white;
+            border-left: 0;
+        }
+
+        /* 升级/连击特效粒子 */
+        .char-sparkle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: sparkle 0.8s ease forwards;
+        }
+
+        @keyframes sparkle {
+            0% { opacity: 1; transform: translate(0, 0) scale(1); }
+            100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
+        }
+
+        /* ===== 角色系统 END ===== */
+
         .progress-container {
             width: 100%;
             background: #e8e8e8;
@@ -994,8 +1288,24 @@
             </div>
         </div>
 
-        <div class="progress-container">
-            <div class="progress-bar" id="progress">0 / 100</div>
+        <!-- 角色伙伴 + 进度条 -->
+        <div class="char-progress-row">
+            <div class="character-wrapper" id="charWrapper">
+                <div class="char-bubble" id="charBubble"></div>
+                <div class="char-head">
+                    <div class="char-hair"></div>
+                    <div class="char-eyes">
+                        <div class="char-eye"></div>
+                        <div class="char-eye"></div>
+                    </div>
+                    <div class="char-blush char-blush-left"></div>
+                    <div class="char-blush char-blush-right"></div>
+                    <div class="char-mouth"></div>
+                </div>
+            </div>
+            <div class="progress-container" style="flex: 1;">
+                <div class="progress-bar" id="progress">0 / 100</div>
+            </div>
         </div>
 
         <div class="game-board">
@@ -1546,6 +1856,8 @@
         });
         
         function initGame() {
+            // 角色开场
+            charReact('start');
             // 只有用户没有手动选年级时，才根据等级自动设置年级
             if (!window.manualGradeSet) {
                 currentGrade = getGradeForLevel(level);
@@ -1638,6 +1950,7 @@
         let voicesLoaded = false;
         let cachedVoices = [];
         let ttsUserInteracted = false;
+        let ttsMuted = false;
         let ttsInitialized = false;
         
         // 检测是否是iOS设备
@@ -1755,6 +2068,167 @@
         }
         
         // 播放单词音频（优先预录音频，降级到TTS）
+        // ===== 角色系统 =====
+        const charMessages = {
+            matchSuccess: [
+                '太棒了！👏', '答对啦！', '真厉害！✨', '你真聪明！', '继续加油！💪',
+                '厉害厉害！', '好棒呀！', '没问题！', '一下子就对了！', '学霸！'
+            ],
+            matchFail: [
+                '没关系～', '再想想！', '下次一定行！', '别灰心 💪', '慢慢来～',
+                '差一点点！', '快想起了！', '加油哦～'
+            ],
+            combo: [
+                '连击太帅了！🔥', '手速好快！', '无敌了！', '连击王！👑',
+                '挡不住！', '太流畅了！', '满分节奏！'
+            ],
+            gameOver: [
+                '辛苦啦～', '表现不错！', '明天继续！', '越来越强了！💪', '休息一下～'
+            ],
+            gameWin: [
+                '完美通关！🎉', '全部答对！🏆', '太厉害了吧！', '满分！⭐', '无人能敌！'
+            ],
+            start: [
+                '开始吧！', '加油哦～', '今天也要努力！', '准备好了吗？'
+            ]
+        };
+
+        let charBubbleTimer = null;
+        let charExpressionTimer = null;
+
+        function setCharExpression(expression, duration = 1500) {
+            const wrapper = document.getElementById('charWrapper');
+            if (!wrapper) return;
+            // 清除上一个表情
+            clearTimeout(charExpressionTimer);
+            wrapper.classList.remove('happy', 'sad', 'celebrate', 'bounce');
+
+            // 触发重排以重新启动动画
+            void wrapper.offsetWidth;
+
+            wrapper.classList.add(expression);
+            charExpressionTimer = setTimeout(() => {
+                wrapper.classList.remove(expression);
+            }, duration);
+        }
+
+        function showCharBubble(text, duration = 1800) {
+            const bubble = document.getElementById('charBubble');
+            if (!bubble) return;
+            clearTimeout(charBubbleTimer);
+
+            bubble.textContent = text;
+            bubble.classList.remove('show');
+            // 触发重排
+            void bubble.offsetWidth;
+            bubble.classList.add('show');
+
+            // 角色用中文读出台词（独立于单词TTS，避免冲突）
+            const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, '').trim();
+            if (cleanText) {
+                setTimeout(() => speakCharText(cleanText), 200);
+            }
+
+            charBubbleTimer = setTimeout(() => {
+                bubble.classList.remove('show');
+            }, duration);
+        }
+
+        // 点击头像切换静音
+        document.getElementById('charWrapper').addEventListener('click', function() {
+            ttsMuted = !ttsMuted;
+            const wrapper = this;
+            if (ttsMuted) {
+                wrapper.classList.add('muted');
+                showCharBubble('🔇 静音了', 1200);
+                // 如果正在播放，立即停止
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                }
+            } else {
+                wrapper.classList.remove('muted');
+                showCharBubble('🔊 开声音啦', 1200);
+            }
+        });
+
+        // 角色专用中文语音（与单词英文TTS互不干扰）
+        function speakCharText(text) {
+            if (!('speechSynthesis' in window) || !ttsUserInteracted || ttsMuted) return;
+            try {
+                // 取消正在说的，避免排队太长
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                }
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-CN';
+                utterance.rate = 1.1;
+                utterance.pitch = 1.3;
+                utterance.volume = 0.9;
+                // 优先选中文语音
+                if (voicesLoaded && cachedVoices.length > 0) {
+                    const zhVoice = cachedVoices.find(v => v.lang && v.lang.startsWith('zh'));
+                    if (zhVoice) utterance.voice = zhVoice;
+                }
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {
+                // 静默失败，不影响游戏
+            }
+        }
+
+        function charReact(type) {
+            const messages = charMessages[type];
+            if (!messages) return;
+            const msg = messages[Math.floor(Math.random() * messages.length)];
+
+            switch (type) {
+                case 'matchSuccess':
+                    setCharExpression('happy', 1200);
+                    showCharBubble(msg, 1500);
+                    break;
+                case 'matchFail':
+                    setCharExpression('sad', 1000);
+                    showCharBubble(msg, 1800);
+                    break;
+                case 'combo':
+                    setCharExpression('celebrate', 1200);
+                    showCharBubble(msg, 1500);
+                    break;
+                case 'gameOver':
+                    setCharExpression('sad', 1500);
+                    showCharBubble(msg, 2500);
+                    break;
+                case 'gameWin':
+                    setCharExpression('celebrate', 2000);
+                    showCharBubble(msg, 2500);
+                    break;
+                case 'start':
+                    setCharExpression('bounce', 1000);
+                    showCharBubble(msg, 1500);
+                    break;
+            }
+        }
+
+        function spawnSparkles() {
+            const wrapper = document.getElementById('charWrapper');
+            if (!wrapper) return;
+            const colors = ['#FFD54F', '#FF7043', '#66BB6A', '#42A5F5', '#AB47BC'];
+            for (let i = 0; i < 6; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'char-sparkle';
+                const angle = (Math.PI * 2 * i) / 6;
+                const dist = 30 + Math.random() * 20;
+                sparkle.style.cssText = `
+                    background: ${colors[Math.floor(Math.random() * colors.length)]};
+                    left: 25px; top: 25px;
+                    --tx: ${Math.cos(angle) * dist}px;
+                    --ty: ${Math.sin(angle) * dist}px;
+                `;
+                wrapper.appendChild(sparkle);
+                setTimeout(() => sparkle.remove(), 800);
+            }
+        }
+        // ===== 角色系统 END =====
+
         function speakWord(word) {
             console.log('[Audio] speakWord called:', word);
             
@@ -1858,12 +2332,14 @@
         
         // Web Speech API 降级方案
         function speakWithTTS(word) {
-            console.log('[TTS] speakWithTTS called:', word, 'interacted:', ttsUserInteracted);
+            console.log('[TTS] speakWithTTS called:', word, 'interacted:', ttsUserInteracted, 'muted:', ttsMuted);
             
             if (!('speechSynthesis' in window)) {
                 console.warn('[TTS] speechSynthesis not supported');
                 return;
             }
+            
+            if (ttsMuted) return;
             
             // iOS/Safari 需要用户交互后才能播放 TTS
             if (!ttsUserInteracted) {
@@ -2037,6 +2513,10 @@
 
             if (combo >= 3) {
                 showCombo(combo);
+                charReact('combo');
+                spawnSparkles();
+            } else {
+                charReact('matchSuccess');
             }
 
             // 统计正确尝试
@@ -2116,6 +2596,9 @@
             // 统计错误尝试
             stats.totalAttempts++;
 
+            // 角色反应
+            charReact('matchFail');
+
             updateUI();
 
             // 记录错词
@@ -2184,6 +2667,13 @@
         }
 
         function gameOver() {
+            // 角色反应：根据得分区分
+            if (lives > 0 && matchedCount >= currentPairs * 2) {
+                charReact('gameWin');
+                spawnSparkles();
+            } else {
+                charReact('gameOver');
+            }
             // 填写 gameOver 弹窗数据
             document.getElementById('go-score').textContent = score;
             document.getElementById('go-level').textContent = `LV ${level}`;
