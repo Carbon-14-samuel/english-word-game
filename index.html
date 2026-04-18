@@ -1751,7 +1751,6 @@
             maxCombo: 0,
             perfectMatches: 0,
             fastestTime: null,
-            totalWordsLearned: 0,
             totalAttempts: 0,
             totalMatches: 0
         };
@@ -1932,8 +1931,6 @@
                 gridElement.appendChild(cell);
             });
 
-            matchedCount = 0;
-            
             // 返回当前使用的单词对，用于预加载音频
             return shuffledPairs;
         }
@@ -1962,7 +1959,6 @@
         // 检测是否是移动设备
         function isMobile() {
             const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            console.log('[Device] Mobile check:', isMobileDevice, navigator.userAgent);
             return isMobileDevice;
         }
         
@@ -1970,7 +1966,6 @@
         function markUserInteracted() {
             if (!ttsUserInteracted) {
                 ttsUserInteracted = true;
-                console.log('[TTS] User interacted, TTS enabled');
                 
                 // iOS需要额外的初始化
                 if (isIOS() && window.speechSynthesis && !ttsInitialized) {
@@ -1987,7 +1982,6 @@
                 window.speechSynthesis.speak(dummyUtterance);
                 window.speechSynthesis.cancel();
                 ttsInitialized = true;
-                console.log('[TTS] iOS TTS initialized');
             } catch (e) {
                 console.warn('[TTS] iOS init failed:', e);
             }
@@ -2021,7 +2015,6 @@
                 cachedVoices = window.speechSynthesis.getVoices();
                 if (cachedVoices.length > 0) {
                     voicesLoaded = true;
-                    console.log('[TTS] Voices loaded:', cachedVoices.length);
                 }
             } catch (e) {
                 console.warn('[TTS] Error loading voices:', e);
@@ -2039,20 +2032,12 @@
         
         // 获取音频完整路径（统一走CDN，file:// 协议在手机上不可靠）
         function getAudioPath(grade, filename) {
-            // 检测是否在GitHub Pages环境
-            const isGitHubPages = window.location.hostname.includes('github.io');
-            if (isGitHubPages) {
-                return `https://cdn.jsdelivr.net/gh/Carbon-14-samuel/english-word-game@main/audio/grade${grade}/${filename}`;
-            }
-            // 本地也走CDN（手机 file:// 协议不支持相对路径加载音频）
             return `https://cdn.jsdelivr.net/gh/Carbon-14-samuel/english-word-game@main/audio/grade${grade}/${filename}`;
         }
         
         // 预加载当前游戏用到的单词音频（只加载当前格子里的单词）
         function preloadGameAudio(shuffledPairs) {
             const grade = currentGrade + 1;
-            
-            console.log('[Audio] Preloading game audio for', shuffledPairs.length, 'pairs');
             
             shuffledPairs.forEach(pair => {
                 const word = pair.en;
@@ -2152,11 +2137,7 @@
 
         function getCharAudioPath(category, index) {
             const filename = `${category}_${index}.mp3`;
-            // 线上走CDN，本地走仓库目录
-            if (location.protocol === 'https:' || location.protocol === 'http:') {
-                return `https://cdn.jsdelivr.net/gh/Carbon-14-samuel/english-word-game/audio/char/${filename}`;
-            }
-            return `audio/char/${filename}`;
+            return `https://cdn.jsdelivr.net/gh/Carbon-14-samuel/english-word-game/audio/char/${filename}`;
         }
 
         function preloadCharAudio() {
@@ -2247,7 +2228,6 @@
         // ===== 角色系统 END =====
 
         function speakWord(word) {
-            console.log('[Audio] speakWord called:', word);
             
             // 先停止当前播放的音频
             if (currentAudio) {
@@ -2311,7 +2291,6 @@
                         speakWithTTS(word);
                     });
                 }
-                console.log('[Audio] Playing dynamic:', word);
             }, { once: true });
             
             // 加载失败时降级到TTS
@@ -2344,12 +2323,10 @@
                     speakWithTTS(word);
                 });
             }
-            console.log('[Audio] Playing cached:', word);
         }
         
         // Web Speech API 降级方案
         function speakWithTTS(word) {
-            console.log('[TTS] speakWithTTS called:', word, 'interacted:', ttsUserInteracted, 'muted:', ttsMuted);
             
             if (!('speechSynthesis' in window)) {
                 console.warn('[TTS] speechSynthesis not supported');
@@ -2401,17 +2378,8 @@
                     );
                     if (englishVoice) {
                         utterance.voice = englishVoice;
-                        console.log('[TTS] Using voice:', englishVoice.name);
                     }
                 }
-                
-                utterance.onstart = () => {
-                    console.log('[TTS] Started speaking:', word);
-                };
-                
-                utterance.onend = () => {
-                    console.log('[TTS] Finished speaking:', word);
-                };
                 
                 utterance.onerror = (e) => {
                     if (e.error !== 'interrupted' && e.error !== 'canceled') {
@@ -2420,7 +2388,6 @@
                 };
                 
                 window.speechSynthesis.speak(utterance);
-                console.log('[TTS] Speaking:', word);
             } catch (e) {
                 console.error('[TTS] doSpeak failed:', e);
             }
@@ -2607,7 +2574,6 @@
 
             currentRoundErrors++;
             lives--;
-            console.log('[Game] Match failed! lives:', lives, 'maxLives:', maxLives);
             combo = 0;
 
             // 统计错误尝试
@@ -2736,6 +2702,7 @@
         function levelUp() {
             level++;
             const newGrade = getGradeForLevel(level);
+            const oldGrade = currentGrade;
 
             // 只有用户没有手动选年级时，才自动切换年级
             if (!window.manualGradeSet && newGrade > currentGrade) {
@@ -2746,7 +2713,7 @@
             expToNextLevel = Math.floor(expToNextLevel * 1.3);
 
             const levelUpText = document.getElementById('levelUpText');
-            levelUpText.textContent = newGrade > currentGrade ? `升入${gradeNames[newGrade]}！` : '升级！';
+            levelUpText.textContent = newGrade > oldGrade ? `升入${gradeNames[newGrade]}！` : '升级！';
             levelUpText.style.display = 'block';
 
             setTimeout(() => {
@@ -2800,6 +2767,7 @@
 
             level++;
             const newGrade = getGradeForLevel(level);
+            const oldGrade = currentGrade;
 
             // 如果升级导致年级改变，更新当前年级
             if (newGrade > currentGrade) {
@@ -2817,7 +2785,7 @@
 
             // 显示升级提示
             const levelUpText = document.getElementById('levelUpText');
-            levelUpText.textContent = newGrade > currentGrade - 1 ? `升入${gradeNames[newGrade]}！` : '已升级';
+            levelUpText.textContent = newGrade > oldGrade ? `升入${gradeNames[newGrade]}！` : '已升级';
             levelUpText.style.display = 'block';
 
             setTimeout(() => {
@@ -2890,38 +2858,6 @@
 
             saveData();
         }
-        
-        // 保留旧函数作为备用
-        function changePairsOld(pairs) {
-            const newPairs = parseInt(pairs);
-
-            if (confirm(`确定要切换到 ${newPairs}对 单词吗？\n切换将重新开始当前局。`)) {
-                window.manualPairsSet = true;
-                currentPairs = newPairs;
-                currentCols = newPairs <= 8 ? 4 : 5;
-                
-                lives = maxLives;
-                combo = 0;
-                hintsRemaining = maxHints;
-                currentRoundErrors = 0;
-                matchedCount = 0;
-
-                initGame();
-                document.getElementById('pairsSelect').value = newPairs;
-
-                const levelUpText = document.getElementById('levelUpText');
-                levelUpText.textContent = `已切换到${newPairs}对`;
-                levelUpText.style.display = 'block';
-
-                setTimeout(() => {
-                    levelUpText.style.display = 'none';
-                }, 1500);
-
-                saveData();
-            } else {
-                document.getElementById('pairsSelect').value = currentPairs;
-            }
-        }
 
         function updateUI() {
             document.getElementById('score').textContent = score;
@@ -2935,7 +2871,6 @@
 
             const livesDisplay = document.getElementById('livesDisplay');
             const hearts = livesDisplay.querySelectorAll('.heart');
-            console.log('[Game] updateUI hearts:', hearts.length, 'lives:', lives);
             hearts.forEach((heart, index) => {
                 if (index < lives) {
                     heart.classList.remove('lost');
@@ -3037,21 +2972,21 @@
             // 按错误次数排序
             allMistakes.sort((a, b) => b.count - a.count);
             
-            // 今日数据（从stats中获取）
-            const todayGames = stats.gamesPlayed || 0;
-            const todayAccuracy = stats.totalAttempts > 0 
+            // 累计数据（从stats中获取）
+            const totalGames = stats.gamesPlayed || 0;
+            const totalAccuracy = stats.totalAttempts > 0 
                 ? Math.round((stats.totalMatches / stats.totalAttempts) * 100) 
                 : 0;
             
             let html = '';
             
-            // 今日学习概览
+            // 累计学习概览
             html += `<div class="stats-dashboard">`;
-            html += `<h3>📊 今日学习概览</h3>`;
+            html += `<h3>📊 累计学习概览</h3>`;
             html += `<div class="stats-grid">`;
-            html += `<div class="stat-card"><span class="stat-number">${todayGames}</span><span class="stat-label">游戏次数</span></div>`;
+            html += `<div class="stat-card"><span class="stat-number">${totalGames}</span><span class="stat-label">游戏次数</span></div>`;
             html += `<div class="stat-card"><span class="stat-number">${totalLearned}</span><span class="stat-label">累计学词</span></div>`;
-            html += `<div class="stat-card"><span class="stat-number">${todayAccuracy}%</span><span class="stat-label">正确率</span></div>`;
+            html += `<div class="stat-card"><span class="stat-number">${totalAccuracy}%</span><span class="stat-label">总正确率</span></div>`;
             html += `</div></div>`;
             
             // 各年级进度
