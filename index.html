@@ -2895,6 +2895,9 @@
                     const roundTime = (Date.now() - roundStartTime) / 1000;
                     stats.gamesPlayed++;
 
+                    // 今日统计：局数+1
+                    dailyStats.games++;
+
                     // 完美配对奖励
                     if (currentRoundErrors === 0) {
                         stats.perfectMatches++;
