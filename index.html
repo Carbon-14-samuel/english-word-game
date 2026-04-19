@@ -67,7 +67,8 @@
         }
 
         .level-badge {
-            background: linear-gradient(135deg, #66BB6A, #43A047);
+            position: relative;
+            background: rgba(255,255,255,0.2);
             color: white;
             padding: 6px 12px;
             border-radius: 15px;
@@ -76,6 +77,24 @@
             display: flex;
             align-items: center;
             gap: 5px;
+            overflow: hidden;
+            z-index: 1;
+        }
+        .level-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: var(--exp-percent, 0%);
+            background: linear-gradient(135deg, #66BB6A, #43A047);
+            z-index: -1;
+            transition: width 0.3s ease;
+        }
+        .level-badge-text {
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
 
         .grade-badge {
@@ -1564,7 +1583,7 @@
                     <option value="10">10对</option>
                     <option value="12">12对</option>
                 </select>
-                <div class="level-badge">LV <span id="level">1</span></div>
+                <div class="level-badge" id="levelBadge"><span class="level-badge-text">LV <span id="level">1</span></span></div>
                 <div class="lives-display" id="livesDisplay">
                     <span class="heart">❤</span>
                     <span class="heart">❤</span>
@@ -1633,13 +1652,6 @@
                     <div class="exp-bar-value" id="expScoreVal">0</div>
                 </div>
                 <div class="exp-percent exp-percent-score" id="expScoreText">0</div>
-            </div>
-            <div class="exp-vertical">
-                <div class="exp-label">经验</div>
-                <div class="exp-bar-wrap">
-                    <div class="exp-bar-fill" id="expBarFill" style="height: 0%;"></div>
-                </div>
-                <div class="exp-percent" id="expPercent">0%</div>
             </div>
         </div>
 
@@ -3240,8 +3252,7 @@
             document.getElementById('pairsSelect').value = currentPairs;
 
             const percent = Math.min((exp / expToNextLevel) * 100, 100);
-            document.getElementById('expBarFill').style.height = percent + '%';
-            document.getElementById('expPercent').textContent = Math.floor(percent) + '%';
+            document.getElementById('levelBadge').style.setProperty('--exp-percent', percent + '%');
 
             // 今日统计
             document.getElementById('dailyGames').textContent = dailyStats.games;
