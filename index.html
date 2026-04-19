@@ -3013,6 +3013,7 @@
         function gameOver() {
             // 今日统计：局数+1
             dailyStats.games++;
+            saveData();
 
             // 角色反应：根据得分区分
             if (lives > 0 && matchedCount >= currentPairs * 2) {
